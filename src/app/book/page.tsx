@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { NavbarClient } from "@/components/navbar-client";
 import { Footer } from "@/components/footer";
@@ -12,6 +12,14 @@ import { CalendarDays, Clock, Users, MapPin, Palmtree, ArrowRight, AlertCircle }
 import { format, addDays } from "date-fns";
 
 export default function BookPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <BookPageContent />
+    </Suspense>
+  );
+}
+
+function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [checkInDate, setCheckInDate] = useState("");
