@@ -1,0 +1,21 @@
+{
+  "buildCommand": "prisma generate && next build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["sin1"],
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "NEXTAUTH_SECRET": "@nextauth_secret",
+    "NEXTAUTH_URL": "@nextauth_url",
+    "SMTP_HOST": "@smtp_host",
+    "SMTP_PORT": "@smtp_port",
+    "SMTP_USER": "@smtp_user",
+    "SMTP_PASSWORD": "@smtp_password",
+    "SMTP_FROM": "@smtp_from",
+    "PAYMONGO_SECRET_KEY": "@paymongo_secret_key",
+    "PAYMONGO_PUBLIC_KEY": "@paymongo_public_key",
+    "PAYMONGO_WEBHOOK_SECRET": "@paymongo_webhook_secret",
+    "NEXT_PUBLIC_APP_URL": "@next_public_app_url",
+    "NODE_ENV": "production"
+  }
+}

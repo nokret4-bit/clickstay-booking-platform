@@ -1,0 +1,269 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Tropical Resort Theme - Manuel Resort */
+    --background: 0 0% 99%; /* Soft white */
+    --foreground: 0 0% 11%; /* Tropical black #1C1C1C */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 11%;
+    --primary: 0 72% 49%; /* Tropical Red #D72323 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 75 94% 48%; /* Soft Green #78B643 */
+    --secondary-foreground: 0 0% 11%;
+    --muted: 30 25% 95%; /* Light tan background */
+    --muted-foreground: 30 10% 50%;
+    --accent: 45 94% 48%; /* Warm Yellow #F6C101 */
+    --accent-foreground: 0 0% 11%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 20% 85%; /* Light tan border */
+    --input: 30 15% 92%;
+    --ring: 0 72% 49%; /* Tropical red */
+    --radius: 0.75rem; /* More rounded for tropical feel */
+  }
+
+  .dark {
+    /* Dark Coffee Theme */
+    --background: 25 30% 12%;
+    --foreground: 45 80% 90%;
+    --card: 25 25% 15%;
+    --card-foreground: 45 80% 90%;
+    --popover: 25 25% 15%;
+    --popover-foreground: 45 80% 90%;
+    --primary: 30 50% 45%;
+    --primary-foreground: 45 100% 95%;
+    --secondary: 45 70% 50%;
+    --secondary-foreground: 25 30% 12%;
+    --muted: 25 20% 25%;
+    --muted-foreground: 45 30% 70%;
+    --accent: 45 80% 55%;
+    --accent-foreground: 25 30% 12%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 25 20% 25%;
+    --input: 25 20% 20%;
+    --ring: 30 50% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.95)),
+                      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23F5F5DC" width="100" height="100"/><circle fill="%23E8DCC8" cx="50" cy="50" r="40" opacity="0.1"/></svg>');
+    background-size: cover, 100px 100px;
+  }
+}
+
+/* Tropical animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(288px);
+    opacity: 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-scan {
+  animation: scan 2s ease-in-out infinite;
+}
+
+/* Wave divider */
+.wave-divider {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.wave-divider svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 60px;
+}
+
+/* Tropical hover effects */
+.tropical-hover {
+  transition: all 0.3s ease;
+}
+
+.tropical-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(215, 35, 35, 0.2);
+}
+
+/* Global Responsive Utilities */
+@layer utilities {
+  /* Ensure images are responsive */
+  img {
+    @apply max-w-full h-auto;
+  }
+  
+  /* Prevent horizontal overflow */
+  html, body {
+    @apply overflow-x-hidden;
+  }
+  
+  /* Responsive container padding */
+  .container {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Responsive text sizes */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+  
+  .text-responsive-3xl {
+    @apply text-3xl sm:text-4xl lg:text-5xl;
+  }
+  
+  /* Responsive spacing */
+  .space-responsive {
+    @apply space-y-4 sm:space-y-6 lg:space-y-8;
+  }
+  
+  .gap-responsive {
+    @apply gap-3 sm:gap-4 lg:gap-6;
+  }
+  
+  .p-responsive {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+  
+  /* Mobile-friendly buttons */
+  .btn-responsive {
+    @apply h-10 sm:h-11 text-sm sm:text-base px-4 sm:px-6;
+  }
+  
+  /* Responsive grid */
+  .grid-responsive-1 {
+    @apply grid grid-cols-1;
+  }
+  
+  .grid-responsive-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2;
+  }
+  
+  .grid-responsive-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  
+  .grid-responsive-4 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4;
+  }
+}
+
+/* Custom scrollbar for all devices */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  
+  .scrollbar-thumb-tropical-green\/30::-webkit-scrollbar-thumb {
+    background-color: rgba(120, 182, 67, 0.3);
+    border-radius: 9999px;
+  }
+  
+  .scrollbar-track-transparent::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(120, 182, 67, 0.3);
+    border-radius: 9999px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+}
+
+/* Mobile-first touch improvements */
+@media (max-width: 640px) {
+  /* Larger tap targets for mobile */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Better mobile table display */
+  table {
+    @apply block overflow-x-auto;
+  }
+}

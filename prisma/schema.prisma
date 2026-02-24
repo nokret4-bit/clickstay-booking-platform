@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model booking {
+  id            String        @id
+  code          String        @unique
+  userId        String?
+  facilityId    String
+  startDate     DateTime
+  endDate       DateTime
+  guests        Int           @default(1)
+  status        BookingStatus @default(PENDING)
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  paymentType   PaymentType   @default(FULL)
+  depositAmount Decimal?      @db.Decimal(10, 2)
+  isCustomPrice Boolean       @default(false)
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  confirmedAt   DateTime?
+  cancelledAt   DateTime?
+  checkedInAt   DateTime?
+  checkedOutAt  DateTime?
+  customerAddress1    String?
+  customerAddress2    String?
+  idDocumentFrontUrl  String?
+  idDocumentBackUrl   String?
+  idDocumentType      String?  // e.g., "Passport", "Driver's License", "SSS ID", etc.
+  idVerified          Boolean  @default(false)
+  idVerifiedAt        DateTime?
+  idVerifiedById      String?
+  idVerifiedBy        user?    @relation("VerifiedBy", fields: [idVerifiedById], references: [id])
+  // Temporary availability lock
+  lockedUntil         DateTime?
+  lockedBy            String?   // Session ID or user ID for temporary lock
+  facility      facility      @relation(fields: [facilityId], references: [id])
+  user          user?         @relation(fields: [userId], references: [id])
+  payment       payment?
+  reviews       review[]
+
+  @@index([code])
+  @@index([customerEmail])
+  @@index([facilityId, startDate, endDate])
+  @@index([status])
+  @@index([lockedUntil])
+}
+
+model facility {
+  id            String       @id
+  name          String
+  kind          FacilityKind
+  description   String?
+  capacity      Int
+  price         Decimal      @db.Decimal(10, 2)
+  photos        String[]
+  amenities     String[]
+  rules         String[]     @default([])
+  freeAmenities String[]     @default([])
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime
+  bookings      booking[]
+  reviews       review[]
+  // Average rating cache
+  averageRating Float?       @default(0)
+  totalReviews  Int          @default(0)
+
+  @@index([isActive])
+  @@index([kind])
+}
+
+model payment {
+  id            String        @id
+  bookingId     String        @unique
+  amount        Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PENDING)
+  paymentMethod String?
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  paidAt        DateTime?
+  booking       booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([transactionId])
+}
+
+model user {
+  id            String          @id
+  name          String
+  email         String          @unique
+  phone         String?
+  passwordHash  String?
+  role          Role            @default(GUEST)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  verifiedBookings booking[]    @relation("VerifiedBy")
+  bookings      booking[]
+  reviews       review[]        // Reviews written by this user
+  auditLogs     auditLog[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model auditLog {
+  id        String       @id @default(cuid())
+  userId    String
+  action    String
+  entity    String // "Booking", "Facility", "User", "Payment"
+  entityId  String
+  data      Json? // Store additional data like old/new values
+  createdAt DateTime     @default(now())
+  user      user         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  CREATE_BOOKING
+  UPDATE_BOOKING
+  DELETE_BOOKING
+  CHECKIN_BOOKING
+  CHECKOUT_BOOKING
+  CREATE_FACILITY
+  UPDATE_FACILITY
+  DELETE_FACILITY
+  CREATE_USER
+  UPDATE_USER
+  DELETE_USER
+  CREATE_PAYMENT
+  UPDATE_PAYMENT
+  DELETE_PAYMENT
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  COMPLETED
+}
+
+enum FacilityKind {
+  ROOM
+  COTTAGE
+  HALL
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentType {
+  FULL
+  PARTIAL
+}
+
+enum Role {
+  GUEST
+  STAFF
+  ADMIN
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model promo {
+  id           String          @id @default(cuid())
+  title        String?
+  description  String?
+  mediaUrl     String          // Can be image or video URL
+  mediaType    MediaType       @default(IMAGE)
+  bgColor      String          @default("from-amber-100 to-yellow-50")
+  facilityLink String?
+  isActive     Boolean         @default(true)
+  order        Int             @default(0)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  activityLogs promoActivity[]
+
+  @@index([isActive, order])
+}
+
+model promoActivity {
+  id        String   @id @default(cuid())
+  promoId   String
+  action    String // "CREATED", "UPDATED", "DELETED", "ACTIVATED", "DEACTIVATED", "DISPLAYED"
+  userId    String?
+  userName  String?
+  details   String? // Additional details about the action
+  createdAt DateTime @default(now())
+  promo     promo    @relation(fields: [promoId], references: [id], onDelete: Cascade)
+
+  @@index([promoId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model galleryImage {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String   // "Pools", "Cottages", "Rooms", "Dining", "Gardens", "Events", "Beach", etc.
+  imageUrl    String
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, order])
+  @@index([category])
+}
+
+model review {
+  id          String      @id @default(cuid())
+  facilityId  String
+  bookingId   String      @unique // Only one review per booking
+  userId      String?     // Optional user ID if logged in
+  rating      Int         // 1-5 stars
+  comment     String?
+  isVerified  Boolean     @default(false) // Verified customer (completed booking)
+  status      ReviewStatus @default(PENDING) // For moderation
+  moderatedBy String?     // Admin who moderated
+  moderatedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  facility    facility    @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  booking     booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  reviewer    user?       @relation(fields: [userId], references: [id])
+
+  @@index([facilityId])
+  @@index([bookingId])
+  @@index([status])
+  @@index([rating])
+}
+
+enum ReviewStatus {
+  PENDING     // Waiting for moderation
+  APPROVED   // Visible to public
+  HIDDEN     // Hidden by admin
+  DELETED    // Soft delete
+}
