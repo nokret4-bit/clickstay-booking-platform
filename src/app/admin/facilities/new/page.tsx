@@ -180,6 +180,7 @@ export default function NewFacilityPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="pricingType" className="text-sm font-semibold">Pricing Type</Label>
+                  {/* Pricing type selector - Per Night or Per Head */}
                   <select
                     id="pricingType"
                     value={form.pricingType}
