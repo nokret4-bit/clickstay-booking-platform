@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { FacilityQuerySchema } from "@/schemas/admin";
 import { getAvailabilityCalendar } from "@/lib/availability";
-import { calculatePrice } from "@/lib/pricing";
-import { parseISO, addDays } from "date-fns";
+import { parseISO } from "date-fns";
 
 export async function GET(request: NextRequest) {
   try {
@@ -59,12 +58,11 @@ export async function GET(request: NextRequest) {
 
       for (const facility of facilities) {
         const availCalendar = await getAvailabilityCalendar(facility.id, startDate, endDate);
-        const priceInfo = await calculatePrice(facility.id, startDate, endDate);
 
         availability[facility.id] = availCalendar.map((item) => ({
           date: item.date.toISOString(),
           available: item.available,
-          price: priceInfo.totalAmount,
+          price: Number(facility.price),
         }));
       }
     }

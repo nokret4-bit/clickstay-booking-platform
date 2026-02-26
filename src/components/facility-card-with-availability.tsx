@@ -39,10 +39,13 @@ export function FacilityCardWithAvailability({
   const firstPhoto = photos[0];
   const kindLabel = facility.kind.charAt(0) + facility.kind.slice(1).toLowerCase();
 
-  // Calculate total price for the selected dates
-  const totalPrice = availability.length > 0 
-    ? availability.reduce((sum, day) => sum + day.price, 0)
-    : facility.price * Math.ceil((new Date(searchParams.to).getTime() - new Date(searchParams.from).getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate total price based on pricing type and dates
+  const nights = Math.ceil((new Date(searchParams.to).getTime() - new Date(searchParams.from).getTime()) / (1000 * 60 * 60 * 24));
+  const actualNights = nights < 1 ? 1 : nights;
+  const isPerHead = facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL';
+  const totalPrice = isPerHead
+    ? Number(facility.price) * facility.capacity
+    : Number(facility.price) * actualNights;
 
   const handleViewDetails = () => {
     // Navigate to facility detail page with search parameters
@@ -119,9 +122,9 @@ export function FacilityCardWithAvailability({
             {formatCurrency(totalPrice, "PHP")}
           </div>
           <div className="text-xs text-tropical-black/60 font-medium">
-            {facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL'
+            {isPerHead
               ? `total for ${facility.capacity} guests`
-              : `total for ${Math.ceil((new Date(searchParams.to).getTime() - new Date(searchParams.from).getTime()) / (1000 * 60 * 60 * 24))} nights`}
+              : `total for ${actualNights} night${actualNights !== 1 ? 's' : ''}`}
           </div>
         </div>
         
