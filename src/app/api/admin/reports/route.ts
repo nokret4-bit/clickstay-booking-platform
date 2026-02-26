@@ -109,14 +109,29 @@ async function getDashboardData() {
     },
   });
 
-  const typeStats = bookingsByType.map((booking) => {
+  // Per-facility stats with names
+  const facilityStats = bookingsByType.map((booking) => {
     const facility = facilityData.find((f) => f.id === booking.facilityId);
     return {
+      facilityId: booking.facilityId,
+      facilityName: facility?.name || "Unknown Facility",
       type: facility?.kind || "Unknown",
       count: booking._count,
       revenue: Number(booking._sum.totalAmount || 0),
     };
-  });
+  }).sort((a, b) => b.revenue - a.revenue);
+
+  // Aggregated stats by type
+  const typeStats = Object.values(
+    facilityStats.reduce((acc, stat) => {
+      if (!acc[stat.type]) {
+        acc[stat.type] = { type: stat.type, count: 0, revenue: 0 };
+      }
+      acc[stat.type].count += stat.count;
+      acc[stat.type].revenue += stat.revenue;
+      return acc;
+    }, {} as Record<string, { type: string; count: number; revenue: number }>)
+  );
 
   // Monthly trends for last 6 months
   const monthlyTrends = [];
@@ -170,6 +185,7 @@ async function getDashboardData() {
     cancelledBookings,
     facilities,
     typeStats,
+    facilityStats,
     recentBookings,
     monthlyTrends,
   });
