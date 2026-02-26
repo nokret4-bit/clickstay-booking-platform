@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
         price: body.price,
         photos: body.photos || [],
         amenities: body.amenities || [],
+        rules: body.rules || [],
+        freeAmenities: body.freeAmenities || [],
         isActive: body.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),

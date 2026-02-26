@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -232,24 +233,26 @@ export default function NewFacilityPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="rules" className="text-sm font-semibold">Rules & Policies</Label>
-                <Input
+                <Textarea
                   id="rules"
-                  placeholder="No smoking, No pets, Quiet hours after 10 PM"
+                  placeholder="Casita, entrance to clubhouse, entrance to adventure park and theme gardens"
                   value={form.rules.join(", ")}
                   onChange={(e) => setForm((f) => ({ ...f, rules: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))}
-                  className="h-11 text-base"
+                  className="min-h-[80px] text-base resize-none whitespace-normal break-words"
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground">Separate rules with commas</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="freeAmenities" className="text-sm font-semibold">Free When You Book</Label>
-                <Input
+                <Textarea
                   id="freeAmenities"
                   placeholder="Breakfast, Parking, Pool Access, Beach Towels"
                   value={form.freeAmenities.join(", ")}
                   onChange={(e) => setForm((f) => ({ ...f, freeAmenities: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))}
-                  className="h-11 text-base"
+                  className="min-h-[80px] text-base resize-none whitespace-normal break-words"
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground">Complimentary amenities included with booking</p>
               </div>

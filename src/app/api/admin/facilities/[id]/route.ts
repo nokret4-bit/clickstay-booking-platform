@@ -51,6 +51,8 @@ export async function PUT(
         price: body.price,
         photos: body.photos,
         amenities: body.amenities,
+        rules: body.rules,
+        freeAmenities: body.freeAmenities,
         isActive: body.isActive,
         updatedAt: new Date(),
       },

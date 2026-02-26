@@ -20,7 +20,7 @@
     "db:reset": "prisma migrate reset --force",
     "db:seed": "tsx prisma/seed_simple.ts",
     "postinstall": "prisma generate",
-    "create-admin": "node scripts/create-admin.js",
+    "create-admin": "tsx scripts/create-admin.ts",
     "create-cashier": "node scripts/create-cashier.js",
     "test-email": "tsx scripts/test-email.ts"
   },

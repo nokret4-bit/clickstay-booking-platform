@@ -221,24 +221,26 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="rules" className="text-sm font-semibold">Rules & Policies</Label>
-                <Input
+                <Textarea
                   id="rules"
                   value={formData.rules.join(", ")}
-                  onChange={(e) => setFormData({ ...formData, rules: e.target.value.split(",").map(s => s.trim()) })}
-                  placeholder="No smoking, No pets, Quiet hours after 10 PM"
-                  className="h-11 text-base"
+                  onChange={(e) => setFormData({ ...formData, rules: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
+                  placeholder="Casita, entrance to clubhouse, entrance to adventure park and theme gardens"
+                  className="min-h-[80px] text-base resize-none whitespace-normal break-words"
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground">Separate rules with commas</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="freeAmenities" className="text-sm font-semibold">Free When You Book</Label>
-                <Input
+                <Textarea
                   id="freeAmenities"
                   value={formData.freeAmenities.join(", ")}
-                  onChange={(e) => setFormData({ ...formData, freeAmenities: e.target.value.split(",").map(s => s.trim()) })}
+                  onChange={(e) => setFormData({ ...formData, freeAmenities: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
                   placeholder="Breakfast, Parking, Pool Access, Beach Towels"
-                  className="h-11 text-base"
+                  className="min-h-[80px] text-base resize-none whitespace-normal break-words"
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground">Complimentary amenities included with booking</p>
               </div>
