@@ -17,6 +17,7 @@ interface FacilityCardWithAvailabilityProps {
     capacity: number;
     price: number;
     photos: string[];
+    pricingType?: string;
   };
   availability: Array<{ date: string; available: boolean; price: number }>;
   searchParams: {
@@ -118,7 +119,9 @@ export function FacilityCardWithAvailability({
             {formatCurrency(totalPrice, "PHP")}
           </div>
           <div className="text-xs text-tropical-black/60 font-medium">
-            total for {Math.ceil((new Date(searchParams.to).getTime() - new Date(searchParams.from).getTime()) / (1000 * 60 * 60 * 24))} nights
+            {facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL'
+              ? `total for ${facility.capacity} guests`
+              : `total for ${Math.ceil((new Date(searchParams.to).getTime() - new Date(searchParams.from).getTime()) / (1000 * 60 * 60 * 24))} nights`}
           </div>
         </div>
         
