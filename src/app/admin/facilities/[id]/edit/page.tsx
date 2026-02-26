@@ -209,12 +209,13 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="amenities" className="text-sm font-semibold">Amenities</Label>
-                <Input
+                <Textarea
                   id="amenities"
                   value={formData.amenities.join(", ")}
-                  onChange={(e) => setFormData({ ...formData, amenities: e.target.value.split(",").map(s => s.trim()) })}
+                  onChange={(e) => setFormData({ ...formData, amenities: e.target.value.split(",").map(s => s.trim()).filter(Boolean) })}
                   placeholder="WiFi, AC, TV, Mini Fridge, Hot Shower"
-                  className="h-11 text-base"
+                  className="min-h-[80px] text-base resize-none whitespace-normal break-words"
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground">Separate amenities with commas</p>
               </div>

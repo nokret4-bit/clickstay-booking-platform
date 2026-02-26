@@ -221,12 +221,13 @@ export default function NewFacilityPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="amenities" className="text-sm font-semibold">Amenities</Label>
-                <Input
+                <Textarea
                   id="amenities"
                   placeholder="WiFi, AC, TV, Mini Fridge, Hot Shower"
                   value={form.amenities.join(", ")}
                   onChange={(e) => setForm((f) => ({ ...f, amenities: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))}
-                  className="h-11 text-base"
+                  className="min-h-[80px] text-base resize-none whitespace-normal break-words"
+                  rows={3}
                 />
                 <p className="text-xs text-muted-foreground">Separate amenities with commas</p>
               </div>
