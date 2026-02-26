@@ -1,4 +1,5 @@
 "use client";
+// Version: 2.1 - Added pricing type dropdown for per-head and per-night pricing
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
