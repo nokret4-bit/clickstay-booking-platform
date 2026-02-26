@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  generateBuildId: async () => {
+    // Force new build ID to invalidate all caches
+    return `build-${Date.now()}`;
+  },
   typedRoutes: true,
   eslint: {
     ignoreDuringBuilds: true,
