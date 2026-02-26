@@ -193,6 +193,8 @@ export default async function UnitPage({ params, searchParams }: UnitPageProps) 
               facilityName={facility.name}
               price={Number(facility.price)}
               capacity={facility.capacity}
+              pricingType={facility.pricingType}
+              kind={facility.kind}
               searchParams={search}
             />
           </div>

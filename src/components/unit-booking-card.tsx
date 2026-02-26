@@ -14,6 +14,8 @@ interface UnitBookingCardProps {
   facilityName: string;
   price: number;
   capacity: number;
+  pricingType?: string;
+  kind?: string;
   searchParams?: {
     from?: string;
     to?: string;
@@ -26,6 +28,8 @@ export function UnitBookingCard({
   facilityName,
   price,
   capacity,
+  pricingType,
+  kind,
   searchParams,
 }: UnitBookingCardProps) {
   const [isLocking, setIsLocking] = useState(false);
@@ -37,12 +41,21 @@ export function UnitBookingCard({
   // Calculate total price and nights
   let totalPrice = 0;
   let nights = 0;
+  const isPerHead = pricingType === 'PER_HEAD' || kind === 'HALL';
+  
   if (hasSearchDates) {
     const fromDate = new Date(searchParams.from!);
     const toDate = new Date(searchParams.to!);
     nights = differenceInDays(toDate, fromDate);
     const actualNights = nights < 1 ? 1 : nights;
-    totalPrice = price * actualNights;
+    
+    if (isPerHead) {
+      // For per-head pricing, price is per person (use capacity as default guest count)
+      totalPrice = price * capacity;
+    } else {
+      // For per-night pricing
+      totalPrice = price * actualNights;
+    }
     nights = actualNights;
   }
 
@@ -122,7 +135,9 @@ export function UnitBookingCard({
         <CardDescription>
           <span className="text-2xl font-bold text-foreground">
             ₱{Number(price).toLocaleString()}
-            <span className="text-sm font-normal text-muted-foreground">{" / night"}</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {isPerHead ? " / head" : " / night"}
+            </span>
           </span>
         </CardDescription>
       </CardHeader>
@@ -147,7 +162,11 @@ export function UnitBookingCard({
 
             <div className="border-t pt-4">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm">₱{price.toLocaleString()} × {nights} night{nights !== 1 ? "s" : ""}</span>
+                {isPerHead ? (
+                  <span className="text-sm">₱{price.toLocaleString()} × {capacity} guests</span>
+                ) : (
+                  <span className="text-sm">₱{price.toLocaleString()} × {nights} night{nights !== 1 ? "s" : ""}</span>
+                )}
                 <span className="text-sm">₱{totalPrice.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center font-bold text-lg">
