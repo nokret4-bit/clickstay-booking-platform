@@ -179,18 +179,34 @@ export default function NewFacilityPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="price" className="text-sm font-semibold">Price per Night (₱)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    min={0}
-                    value={form.price}
-                    onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
+                  <Label htmlFor="pricingType" className="text-sm font-semibold">Pricing Type</Label>
+                  <select
+                    id="pricingType"
+                    value={form.pricingType}
+                    onChange={(e) => setForm((f) => ({ ...f, pricingType: e.target.value as "PER_NIGHT" | "PER_HEAD" }))}
+                    className="flex h-11 w-full rounded-md border-2 border-input bg-background px-3 py-2 text-base font-medium cursor-pointer hover:border-primary transition-colors"
                     required
-                    className="h-11 text-base"
-                    placeholder="0.00"
-                  />
+                  >
+                    <option value="PER_NIGHT">Per Night</option>
+                    <option value="PER_HEAD">Per Head</option>
+                  </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="price" className="text-sm font-semibold">
+                  {form.pricingType === "PER_HEAD" ? "Price per Head (₱)" : "Price per Night (₱)"}
+                </Label>
+                <Input
+                  id="price"
+                  type="number"
+                  min={0}
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
+                  required
+                  className="h-11 text-base"
+                  placeholder="0.00"
+                />
               </div>
 
               <div className="space-y-2">
