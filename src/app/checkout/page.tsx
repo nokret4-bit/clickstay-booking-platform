@@ -38,7 +38,10 @@ function CheckoutContent() {
   // Calculate deposit amount (50% of total)
   const depositAmount = quote ? quote.totalAmount * 0.5 : 0;
   const nightsCount = startDate && endDate ? 
-    Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    (() => {
+      const nights = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+      return nights < 1 ? 1 : nights;
+    })() : 0;
 
   // Fetch facility details
   useEffect(() => {

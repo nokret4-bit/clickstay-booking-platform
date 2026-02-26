@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     ];
 
     const rows = bookings.map((booking) => {
-      const nights = Math.ceil((booking.endDate.getTime() - booking.startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const nights = (booking.endDate.getTime() - booking.startDate.getTime()) / (1000 * 60 * 60 * 24);
       const firstReview = booking.reviews && booking.reviews.length > 0 ? booking.reviews[0] : null;
       
       // Format amount with thousand separators

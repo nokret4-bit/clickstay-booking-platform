@@ -26,7 +26,10 @@ async function getAvailableFacilities(searchParams: SearchParams) {
     if (to) queryParams.append('to', to);
     if (types) {
       const typeArray = types.split(',');
-      if (typeArray[0]) queryParams.append('type', typeArray[0]);
+      // Pass all types to the API, not just the first one
+      typeArray.forEach(type => {
+        if (type) queryParams.append('type', type);
+      });
     }
     if (capacity) queryParams.append('capacity', capacity);
 

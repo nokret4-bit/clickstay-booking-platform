@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Users, Calendar, Loader2 } from "lucide-react";
+import { differenceInDays } from "date-fns";
 import Link from "next/link";
 
 interface UnitBookingCardProps {
@@ -39,8 +40,10 @@ export function UnitBookingCard({
   if (hasSearchDates) {
     const fromDate = new Date(searchParams.from!);
     const toDate = new Date(searchParams.to!);
-    nights = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
-    totalPrice = price * nights;
+    nights = differenceInDays(toDate, fromDate);
+    const actualNights = nights < 1 ? 1 : nights;
+    totalPrice = price * actualNights;
+    nights = actualNights;
   }
 
   const handleSelectAndContinue = async () => {
