@@ -49,6 +49,7 @@ export async function PUT(
         description: body.description,
         capacity: body.capacity,
         price: body.price,
+        pricingType: body.pricingType || (body.kind === 'HALL' ? 'PER_HEAD' : 'PER_NIGHT'),
         photos: body.photos,
         amenities: body.amenities,
         rules: body.rules,

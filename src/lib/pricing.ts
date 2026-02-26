@@ -16,7 +16,8 @@ const SERVICE_FEE_RATE = 0.05; // 5% service fee
 export async function calculatePrice(
   facilityId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  guests?: number
 ): Promise<PriceBreakdown> {
   // Find the facility
   const facility = await prisma.facility.findUnique({
@@ -32,7 +33,17 @@ export async function calculatePrice(
   const nights = differenceInDays(endDate, startDate);
   const actualNights = nights < 1 ? 1 : nights;
   
-  const subtotal = basePrice * actualNights;
+  // Calculate subtotal based on pricing type
+  let subtotal: number;
+  if (facility.pricingType === 'PER_HEAD') {
+    // For function halls: price per head (guests required)
+    const guestCount = guests || facility.capacity;
+    subtotal = basePrice * guestCount;
+  } else {
+    // For rooms/cottages: price per night
+    subtotal = basePrice * actualNights;
+  }
+  
   const taxAmount = subtotal * TAX_RATE;
   const feeAmount = subtotal * SERVICE_FEE_RATE;
   const totalAmount = subtotal + taxAmount + feeAmount;

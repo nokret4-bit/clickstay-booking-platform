@@ -61,6 +61,7 @@ model facility {
   description   String?
   capacity      Int
   price         Decimal      @db.Decimal(10, 2)
+  pricingType   PricingType  @default(PER_NIGHT) // PER_NIGHT for rooms/cottages, PER_HEAD for halls
   photos        String[]
   amenities     String[]
   rules         String[]     @default([])
@@ -160,6 +161,11 @@ enum FacilityKind {
   ROOM
   COTTAGE
   HALL
+}
+
+enum PricingType {
+  PER_NIGHT
+  PER_HEAD
 }
 
 enum PaymentStatus {

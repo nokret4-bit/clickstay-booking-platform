@@ -21,6 +21,7 @@ export default function NewFacilityPage() {
     description: "",
     capacity: 1,
     price: 0,
+    pricingType: "PER_NIGHT" as "PER_NIGHT" | "PER_HEAD",
     photos: [] as string[],
     amenities: [] as string[],
     rules: [] as string[],
@@ -36,6 +37,15 @@ export default function NewFacilityPage() {
       .then(() => fetch("/api/facilities"))
       .catch(() => null);
   }, []);
+
+  // Auto-set pricing type based on facility kind
+  useEffect(() => {
+    if (form.kind === "HALL") {
+      setForm(prev => ({ ...prev, pricingType: "PER_HEAD" }));
+    } else {
+      setForm(prev => ({ ...prev, pricingType: "PER_NIGHT" }));
+    }
+  }, [form.kind]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
