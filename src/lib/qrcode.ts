@@ -18,7 +18,13 @@ export async function generateBookingQRCode(
 ): Promise<string> {
   try {
     // Create a JSON string with booking information
-    const qrData = JSON.stringify(data);
+    // Use 'code' key to match email QR format for scanner compatibility
+    const qrData = JSON.stringify({
+      code: data.bookingCode,
+      name: data.customerName,
+      facility: data.facilityUnit,
+      checkIn: data.checkInDate,
+    });
 
     // Generate QR code as data URL
     const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
