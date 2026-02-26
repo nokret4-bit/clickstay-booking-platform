@@ -8,27 +8,34 @@ import { parseISO, addDays } from "date-fns";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    
+    // Get all type parameters (supports multiple types)
+    const types = searchParams.getAll("type");
     const queryParams = {
-      type: searchParams.get("type") || undefined,
+      type: types.length > 0 ? types[0] : undefined,
       from: searchParams.get("from") || undefined,
       to: searchParams.get("to") || undefined,
       capacity: searchParams.get("capacity") || undefined,
     };
 
     console.log("Query params received:", queryParams);
+    console.log("All types:", types);
     const validated = FacilityQuerySchema.parse(queryParams);
     console.log("Validated params:", validated);
 
     const where: {
       isActive: boolean;
-      kind?: typeof validated.type;
+      kind?: any;
       capacity?: { gte: number };
     } = {
       isActive: true,
     };
 
-    if (validated.type) {
-      where.kind = validated.type;
+    // Handle multiple facility types
+    if (types.length > 1) {
+      where.kind = { in: types };
+    } else if (types.length === 1) {
+      where.kind = types[0];
     }
 
     if (validated.capacity) {
