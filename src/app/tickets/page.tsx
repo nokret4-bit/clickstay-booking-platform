@@ -24,9 +24,7 @@ interface TicketType {
   description: string | null;
   weekdayPrice: number;
   weekendPrice: number;
-  facilityId: string;
   eventId: string | null;
-  facility: { id: string; name: string; kind: string };
   event: { id: string; name: string; date: string } | null;
 }
 
@@ -36,8 +34,6 @@ interface EventType {
   description: string | null;
   date: string;
   endDate: string | null;
-  facilityId: string;
-  facility: { id: string; name: string };
   tickets: TicketType[];
 }
 
@@ -80,11 +76,6 @@ export default function TicketsPage() {
           <div className="absolute bottom-20 left-10 w-96 h-96 bg-pink-400/10 rounded-full blur-3xl" style={{ animationDelay: "1s" }} />
 
           <div className="container mx-auto px-4 text-center relative z-10">
-            <div className="inline-flex items-center gap-2 bg-purple-500/90 text-white px-6 py-2 rounded-full mb-6 shadow-lg">
-              <Ticket className="h-5 w-5" />
-              <span className="font-semibold">Function Hall Tickets</span>
-            </div>
-
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
               <span className="bg-gradient-to-r from-purple-600 via-pink-500 to-tropical-red bg-clip-text text-transparent">
                 Get Your Tickets
@@ -92,7 +83,7 @@ export default function TicketsPage() {
             </h1>
 
             <p className="text-xl text-tropical-black mb-4 max-w-2xl mx-auto font-medium drop-shadow-md bg-white/40 backdrop-blur-sm px-6 py-3 rounded-2xl">
-              Buy tickets for regular admission or upcoming events at Manuel Resort Function Hall
+              Buy tickets for regular admission or upcoming events at Manuel Resort
             </p>
 
             <Link href="/">
