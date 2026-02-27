@@ -43,8 +43,11 @@ export function FacilityCardWithAvailability({
   const nights = Math.ceil((new Date(searchParams.to).getTime() - new Date(searchParams.from).getTime()) / (1000 * 60 * 60 * 24));
   const actualNights = nights < 1 ? 1 : nights;
   const isPerHead = facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL';
+  const isPerUse = facility.pricingType === 'PER_USE' || facility.kind === 'COTTAGE';
   const totalPrice = isPerHead
     ? Number(facility.price) * facility.capacity
+    : isPerUse
+    ? Number(facility.price)
     : Number(facility.price) * actualNights;
 
   const handleViewDetails = () => {
@@ -124,6 +127,8 @@ export function FacilityCardWithAvailability({
           <div className="text-xs text-tropical-black/60 font-medium">
             {isPerHead
               ? `total for ${facility.capacity} guests`
+              : isPerUse
+              ? 'day use'
               : `total for ${actualNights} night${actualNights !== 1 ? 's' : ''}`}
           </div>
         </div>

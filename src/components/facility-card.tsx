@@ -86,7 +86,7 @@ export function FacilityCard({ facility }: FacilityCardProps) {
             <div className="text-3xl font-bold bg-gradient-tropical bg-clip-text text-transparent">
               {formatCurrency(Number(facility.price), "PHP")}
             </div>
-            <div className="text-xs text-tropical-black/60 font-medium">{facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL' ? 'per head' : 'per night'}</div>
+            <div className="text-xs text-tropical-black/60 font-medium">{facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL' ? 'per head' : facility.pricingType === 'PER_USE' || facility.kind === 'COTTAGE' ? 'per use' : 'per night'}</div>
           </div>
           <Link href={`/unit/${facility.id}`}>
             <TropicalButton size="md" variant="primary">

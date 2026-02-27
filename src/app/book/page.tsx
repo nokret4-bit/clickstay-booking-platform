@@ -8,7 +8,7 @@ import { TropicalButton } from "@/components/tropical/tropical-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarDays, Clock, Users, MapPin, Palmtree, ArrowRight, AlertCircle } from "lucide-react";
+import { CalendarDays, Clock, Users, Palmtree, ArrowRight, ArrowLeft, AlertCircle, Ticket } from "lucide-react";
 import { format, addDays } from "date-fns";
 
 export default function BookPage() {
@@ -22,74 +22,55 @@ export default function BookPage() {
 function BookPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [step, setStep] = useState<1 | 2>(1); // Step 1: Select type, Step 2: Select dates
+  const [selectedType, setSelectedType] = useState("");
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get redirect message from URL params
   const redirectMessage = searchParams.get("message");
-
-  // Set minimum date to today
   const today = format(new Date(), "yyyy-MM-dd");
 
-  const categories = [
-    {
-      id: "ROOM",
-      name: "Rooms",
-      description: "Comfortable accommodations with modern amenities",
-      icon: Users,
-      color: "from-blue-500 to-cyan-500"
-    },
-    {
-      id: "COTTAGE", 
-      name: "Cottages",
-      description: "Spacious private cottages perfect for families",
-      icon: Palmtree,
-      color: "from-green-500 to-emerald-500"
-    },
-    {
-      id: "HALL",
-      name: "Function Halls",
-      description: "Elegant venues for events and gatherings",
-      icon: MapPin,
-      color: "from-purple-500 to-pink-500"
-    }
-  ];
+  const isRoom = selectedType === "ROOM";
+  const isCottage = selectedType === "COTTAGE";
 
-  const handleCategoryToggle = (categoryId: string) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
-      } else {
-        return [...prev, categoryId];
-      }
-    });
+  const handleTypeSelect = (type: string) => {
+    if (type === "HALL") {
+      router.push("/tickets");
+      return;
+    }
+    setSelectedType(type);
+    setStep(2);
   };
 
-  const handleSearchAvailability = async () => {
-    if (!checkInDate || !checkOutDate) {
-      return;
-    }
+  const handleBack = () => {
+    setStep(1);
+    setSelectedType("");
+    setCheckInDate("");
+    setCheckOutDate("");
+  };
 
-    if (selectedCategories.length === 0) {
-      return;
-    }
+  const handleSearchAvailability = () => {
+    if (isRoom && (!checkInDate || !checkOutDate)) return;
+    if (isCottage && !checkInDate) return;
 
     setIsLoading(true);
 
-    // Build query parameters
+    const from = checkInDate;
+    const to = isRoom ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
+
     const params = new URLSearchParams({
-      from: checkInDate,
-      to: checkOutDate,
-      types: selectedCategories.join(",")
+      from,
+      to,
+      types: selectedType,
     });
 
     router.push(`/browse/availability?${params.toString()}`);
   };
 
-  const isFormValid = checkInDate && checkOutDate && selectedCategories.length > 0;
-  const isCheckOutValid = checkInDate && checkOutDate && new Date(checkOutDate) > new Date(checkInDate);
+  const isFormValid = isRoom
+    ? checkInDate && checkOutDate && new Date(checkOutDate) > new Date(checkInDate)
+    : checkInDate;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -109,12 +90,16 @@ function BookPageContent() {
             
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
               <span className="bg-gradient-to-r from-tropical-red via-tropical-yellow to-tropical-green bg-clip-text text-transparent">
-                Find Your Perfect Stay
+                {step === 1 ? "What Are You Looking For?" : isRoom ? "Select Your Stay Dates" : "Select Your Visit Date"}
               </span>
             </h1>
             
             <p className="text-xl text-tropical-black mb-8 max-w-2xl mx-auto font-medium drop-shadow-md bg-white/40 backdrop-blur-sm px-6 py-3 rounded-2xl">
-              Select your dates and preferences to discover available facilities tailored to your needs
+              {step === 1
+                ? "Choose your facility type to get started"
+                : isRoom
+                ? "Pick your check-in and check-out dates"
+                : "Pick the date you'd like to visit"}
             </p>
           </div>
         </section>
@@ -123,7 +108,6 @@ function BookPageContent() {
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
-              {/* Redirect Message Alert */}
               {redirectMessage && (
                 <Alert className="mb-6 border-tropical-yellow/50 bg-tropical-yellow/10">
                   <AlertCircle className="h-4 w-4 text-tropical-yellow" />
@@ -136,134 +120,158 @@ function BookPageContent() {
               <Card className="shadow-xl border-0">
                 <CardHeader className="text-center pb-8">
                   <CardTitle className="text-3xl font-bold text-tropical-black">
-                    Tell Us About Your Stay
+                    {step === 1 ? "Choose Your Facility" : isRoom ? "Room Booking" : "Cottage Day Use"}
                   </CardTitle>
                   <CardDescription className="text-lg text-tropical-black/90 font-medium">
-                    Let us know when you're visiting and what type of accommodation you prefer
+                    {step === 1
+                      ? "Select the type of facility you want to book"
+                      : isRoom
+                      ? "Select your check-in and check-out dates"
+                      : "Select the date for your cottage visit"}
                   </CardDescription>
                 </CardHeader>
 
                 <CardContent className="space-y-8">
-                  {/* Date Selection */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <Label htmlFor="checkin" className="text-base font-semibold flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-tropical-green" />
-                        Check-in Date
-                      </Label>
-                      <input
-                        id="checkin"
-                        type="date"
-                        min={today}
-                        value={checkInDate}
-                        onChange={(e) => {
-                          setCheckInDate(e.target.value);
-                          // Auto-set checkout to next day if not set or invalid
-                          if (!checkOutDate || new Date(checkOutDate) <= new Date(e.target.value)) {
-                            setCheckOutDate(format(addDays(new Date(e.target.value), 1), "yyyy-MM-dd"));
-                          }
-                        }}
-                        className="w-full h-14 px-4 border-2 border-tropical-tan/20 rounded-xl focus:border-tropical-green focus:outline-none text-lg"
-                      />
-                    </div>
+                  {/* STEP 1: Facility Type Selection */}
+                  {step === 1 && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <button
+                        type="button"
+                        onClick={() => handleTypeSelect("ROOM")}
+                        className="relative p-8 rounded-xl border-2 border-tropical-tan/20 hover:border-blue-400 hover:shadow-lg transition-all duration-300 text-left group"
+                      >
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                          <Users className="h-8 w-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-tropical-black mb-2">Room</h3>
+                        <p className="text-sm text-tropical-black/70">Comfortable rooms for overnight stays with modern amenities</p>
+                        <ArrowRight className="absolute top-4 right-4 h-5 w-5 text-gray-300 group-hover:text-blue-500 transition-colors" />
+                      </button>
 
-                    <div className="space-y-3">
-                      <Label htmlFor="checkout" className="text-base font-semibold flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-tropical-red" />
-                        Check-out Date
-                      </Label>
-                      <input
-                        id="checkout"
-                        type="date"
-                        min={checkInDate || today}
-                        value={checkOutDate}
-                        onChange={(e) => setCheckOutDate(e.target.value)}
-                        className={`w-full h-14 px-4 border-2 rounded-xl focus:outline-none text-lg ${
-                          checkInDate && checkOutDate && new Date(checkOutDate) <= new Date(checkInDate)
-                            ? "border-red-300 focus:border-red-400"
-                            : "border-tropical-tan/20 focus:border-tropical-green"
-                        }`}
-                      />
-                      {checkInDate && checkOutDate && new Date(checkOutDate) <= new Date(checkInDate) && (
-                        <p className="text-sm text-red-500 mt-1">Check-out must be after check-in date</p>
-                      )}
-                    </div>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => handleTypeSelect("COTTAGE")}
+                        className="relative p-8 rounded-xl border-2 border-tropical-tan/20 hover:border-green-400 hover:shadow-lg transition-all duration-300 text-left group"
+                      >
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                          <Palmtree className="h-8 w-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-tropical-black mb-2">Cottage</h3>
+                        <p className="text-sm text-tropical-black/70">Day-use cottages for a relaxing getaway with your family</p>
+                        <ArrowRight className="absolute top-4 right-4 h-5 w-5 text-gray-300 group-hover:text-green-500 transition-colors" />
+                      </button>
 
-                  {/* Category Selection */}
-                  <div className="space-y-4">
-                    <Label className="text-base font-semibold flex items-center gap-2">
-                      <Users className="h-5 w-5 text-tropical-blue" />
-                      What type of facility are you looking for?
-                    </Label>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {categories.map((category) => {
-                        const Icon = category.icon;
-                        const isSelected = selectedCategories.includes(category.id);
-                        
-                        return (
-                          <button
-                            key={category.id}
-                            type="button"
-                            onClick={() => handleCategoryToggle(category.id)}
-                            className={`relative p-6 rounded-xl border-2 transition-all duration-300 text-left ${
-                              isSelected
-                                ? "border-tropical-green bg-gradient-to-br from-tropical-green/5 to-tropical-blue/5 shadow-lg scale-105"
-                                : "border-tropical-tan/20 hover:border-tropical-green/50 hover:shadow-md"
-                            }`}
-                          >
-                            <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${category.color} flex items-center justify-center mb-4`}>
-                              <Icon className="h-6 w-6 text-white" />
-                            </div>
-                            
-                            <h3 className="text-lg font-bold text-tropical-black mb-2">
-                              {category.name}
-                            </h3>
-                            
-                            <p className="text-sm text-tropical-black/70">
-                              {category.description}
-                            </p>
-                            
-                            {isSelected && (
-                              <div className="absolute top-3 right-3 w-6 h-6 bg-tropical-green rounded-full flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">✓</span>
-                              </div>
+                      <button
+                        type="button"
+                        onClick={() => handleTypeSelect("HALL")}
+                        className="relative p-8 rounded-xl border-2 border-tropical-tan/20 hover:border-purple-400 hover:shadow-lg transition-all duration-300 text-left group"
+                      >
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                          <Ticket className="h-8 w-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-tropical-black mb-2">Function Hall</h3>
+                        <p className="text-sm text-tropical-black/70">Buy tickets for events and gatherings at the function hall</p>
+                        <ArrowRight className="absolute top-4 right-4 h-5 w-5 text-gray-300 group-hover:text-purple-500 transition-colors" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* STEP 2: Date Selection */}
+                  {step === 2 && (
+                    <>
+                      <div className="flex items-center gap-3 mb-2">
+                        <button
+                          onClick={handleBack}
+                          className="flex items-center gap-1 text-tropical-green hover:underline font-medium text-sm"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Back to facility selection
+                        </button>
+                      </div>
+
+                      {isRoom ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <Label htmlFor="checkin" className="text-base font-semibold flex items-center gap-2">
+                              <CalendarDays className="h-5 w-5 text-tropical-green" />
+                              Check-in Date
+                            </Label>
+                            <input
+                              id="checkin"
+                              type="date"
+                              min={today}
+                              value={checkInDate}
+                              onChange={(e) => {
+                                setCheckInDate(e.target.value);
+                                if (!checkOutDate || new Date(checkOutDate) <= new Date(e.target.value)) {
+                                  setCheckOutDate(format(addDays(new Date(e.target.value), 1), "yyyy-MM-dd"));
+                                }
+                              }}
+                              className="w-full h-14 px-4 border-2 border-tropical-tan/20 rounded-xl focus:border-tropical-green focus:outline-none text-lg"
+                            />
+                          </div>
+                          <div className="space-y-3">
+                            <Label htmlFor="checkout" className="text-base font-semibold flex items-center gap-2">
+                              <Clock className="h-5 w-5 text-tropical-red" />
+                              Check-out Date
+                            </Label>
+                            <input
+                              id="checkout"
+                              type="date"
+                              min={checkInDate || today}
+                              value={checkOutDate}
+                              onChange={(e) => setCheckOutDate(e.target.value)}
+                              className={`w-full h-14 px-4 border-2 rounded-xl focus:outline-none text-lg ${
+                                checkInDate && checkOutDate && new Date(checkOutDate) <= new Date(checkInDate)
+                                  ? "border-red-300 focus:border-red-400"
+                                  : "border-tropical-tan/20 focus:border-tropical-green"
+                              }`}
+                            />
+                            {checkInDate && checkOutDate && new Date(checkOutDate) <= new Date(checkInDate) && (
+                              <p className="text-sm text-red-500 mt-1">Check-out must be after check-in date</p>
                             )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    
-                    {selectedCategories.length === 0 && (
-                      <p className="text-sm text-tropical-black/50 text-center">
-                        Please select at least one category to continue
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Search Button */}
-                  <div className="pt-4">
-                    <TropicalButton
-                      size="lg"
-                      className="w-full h-16 text-lg font-semibold"
-                      disabled={!isFormValid || !isCheckOutValid || isLoading}
-                      onClick={handleSearchAvailability}
-                    >
-                      {isLoading ? (
-                        "Searching Availability..."
+                          </div>
+                        </div>
                       ) : (
-                        <>
-                          Search Available Facilities
-                          <ArrowRight className="h-5 w-5 ml-2" />
-                        </>
+                        <div className="max-w-md mx-auto space-y-3">
+                          <Label htmlFor="visitDate" className="text-base font-semibold flex items-center gap-2">
+                            <CalendarDays className="h-5 w-5 text-tropical-green" />
+                            Visit Date
+                          </Label>
+                          <input
+                            id="visitDate"
+                            type="date"
+                            min={today}
+                            value={checkInDate}
+                            onChange={(e) => setCheckInDate(e.target.value)}
+                            className="w-full h-14 px-4 border-2 border-tropical-tan/20 rounded-xl focus:border-tropical-green focus:outline-none text-lg"
+                          />
+                          <p className="text-sm text-tropical-black/50">Cottages are for day use only — no overnight stays</p>
+                        </div>
                       )}
-                    </TropicalButton>
-                    
-                    <p className="text-center text-sm text-tropical-black/60 mt-3">
-                      We'll show you only facilities available for your selected dates
-                    </p>
-                  </div>
+
+                      <div className="pt-4">
+                        <TropicalButton
+                          size="lg"
+                          className="w-full h-16 text-lg font-semibold"
+                          disabled={!isFormValid || isLoading}
+                          onClick={handleSearchAvailability}
+                        >
+                          {isLoading ? (
+                            "Searching Availability..."
+                          ) : (
+                            <>
+                              Search Available {isRoom ? "Rooms" : "Cottages"}
+                              <ArrowRight className="h-5 w-5 ml-2" />
+                            </>
+                          )}
+                        </TropicalButton>
+                        <p className="text-center text-sm text-tropical-black/60 mt-3">
+                          We'll show you only {isRoom ? "rooms" : "cottages"} available for your selected date{isRoom ? "s" : ""}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>

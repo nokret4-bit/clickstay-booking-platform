@@ -71,6 +71,8 @@ model facility {
   updatedAt     DateTime
   bookings      booking[]
   reviews       review[]
+  tickets       ticket[]
+  events        event[]
   // Average rating cache
   averageRating Float?       @default(0)
   totalReviews  Int          @default(0)
@@ -166,6 +168,7 @@ enum FacilityKind {
 enum PricingType {
   PER_NIGHT
   PER_HEAD
+  PER_USE
 }
 
 enum PaymentStatus {
@@ -260,6 +263,76 @@ model review {
   @@index([bookingId])
   @@index([status])
   @@index([rating])
+}
+
+model ticket {
+  id             String   @id @default(cuid())
+  name           String   // e.g., "Regular Admission", "VIP"
+  description    String?
+  weekdayPrice   Decimal  @db.Decimal(10, 2)
+  weekendPrice   Decimal  @db.Decimal(10, 2)
+  facilityId     String
+  facility       facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  eventId        String?  // null for regular tickets, set for event-specific tickets
+  event          event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  purchases      ticketPurchase[]
+
+  @@index([facilityId])
+  @@index([eventId])
+  @@index([isActive])
+}
+
+model event {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  date        DateTime
+  endDate     DateTime?
+  facilityId  String
+  facility    facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  tickets     ticket[]
+  maxCapacity Int?     // Override facility capacity for this event
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([facilityId])
+  @@index([date])
+  @@index([isActive])
+}
+
+model ticketPurchase {
+  id            String        @id @default(cuid())
+  ticketId      String
+  ticket        ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  quantity      Int           @default(1)
+  unitPrice     Decimal       @db.Decimal(10, 2)
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  purchaseDate  DateTime      // The date the ticket is for
+  status        TicketStatus  @default(PENDING)
+  paymentMethod String?
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([ticketId])
+  @@index([customerEmail])
+  @@index([purchaseDate])
+  @@index([status])
+}
+
+enum TicketStatus {
+  PENDING
+  CONFIRMED
+  USED
+  CANCELLED
+  EXPIRED
 }
 
 enum ReviewStatus {

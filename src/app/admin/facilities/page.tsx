@@ -158,7 +158,7 @@ export default async function AdminFacilitiesPage() {
                               </div>
                             </div>
                             <div>
-                              <p className="text-xs font-medium text-muted-foreground mb-2">{facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL' ? 'Price per Head' : 'Price per Night'}</p>
+                              <p className="text-xs font-medium text-muted-foreground mb-2">{facility.pricingType === 'PER_HEAD' || facility.kind === 'HALL' ? 'Price per Head' : facility.pricingType === 'PER_USE' || facility.kind === 'COTTAGE' ? 'Price per Use' : 'Price per Night'}</p>
                               <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-bold text-primary">
                                   ₱{Number(facility.price).toLocaleString()}

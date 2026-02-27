@@ -42,6 +42,7 @@ export function UnitBookingCard({
   let totalPrice = 0;
   let nights = 0;
   const isPerHead = pricingType === 'PER_HEAD' || kind === 'HALL';
+  const isPerUse = pricingType === 'PER_USE' || kind === 'COTTAGE';
   
   if (hasSearchDates) {
     const fromDate = new Date(searchParams.from!);
@@ -52,6 +53,9 @@ export function UnitBookingCard({
     if (isPerHead) {
       // For per-head pricing, price is per person (use capacity as default guest count)
       totalPrice = price * capacity;
+    } else if (isPerUse) {
+      // For per-use pricing (cottages), flat rate
+      totalPrice = price;
     } else {
       // For per-night pricing
       totalPrice = price * actualNights;
@@ -136,7 +140,7 @@ export function UnitBookingCard({
           <span className="text-2xl font-bold text-foreground">
             ₱{Number(price).toLocaleString()}
             <span className="text-sm font-normal text-muted-foreground">
-              {isPerHead ? " / head" : " / night"}
+              {isPerHead ? " / head" : isPerUse ? " / use" : " / night"}
             </span>
           </span>
         </CardDescription>
@@ -157,13 +161,17 @@ export function UnitBookingCard({
                   {new Date(searchParams.to!).toLocaleDateString()}
                 </span>
               </div>
-              <div className="text-sm text-muted-foreground">{nights} night{nights !== 1 ? "s" : ""}</div>
+              <div className="text-sm text-muted-foreground">
+                {isPerUse ? "Day use" : `${nights} night${nights !== 1 ? "s" : ""}`}
+              </div>
             </div>
 
             <div className="border-t pt-4">
               <div className="flex justify-between items-center mb-2">
                 {isPerHead ? (
                   <span className="text-sm">₱{price.toLocaleString()} × {capacity} guests</span>
+                ) : isPerUse ? (
+                  <span className="text-sm">₱{price.toLocaleString()} (day use)</span>
                 ) : (
                   <span className="text-sm">₱{price.toLocaleString()} × {nights} night{nights !== 1 ? "s" : ""}</span>
                 )}

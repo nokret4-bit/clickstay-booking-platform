@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Sparkles,
   Star,
+  Ticket,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -52,6 +53,7 @@ export default function AdminLayout({
     { href: "/admin/reservations" as const, label: "Reservations", icon: Calendar, adminOnly: false, badge: null },
     { href: "/cashier" as const, label: "Cashier", icon: Banknote, adminOnly: false, badge: null },
     { href: "/admin/facilities" as const, label: "Facilities", icon: Building2, adminOnly: true, badge: null },
+    { href: "/admin/tickets" as const, label: "Tickets", icon: Ticket, adminOnly: true, badge: null },
     { href: "/admin/reviews" as const, label: "Reviews", icon: Star, adminOnly: true, badge: null },
     { href: "/admin/reports" as const, label: "Reports", icon: BarChart3, adminOnly: true, badge: null },
     { href: "/admin/promos" as const, label: "Promo Management", icon: Megaphone, adminOnly: true, badge: null },
