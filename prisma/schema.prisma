@@ -71,8 +71,6 @@ model facility {
   updatedAt     DateTime
   bookings      booking[]
   reviews       review[]
-  tickets       ticket[]
-  events        event[]
   // Average rating cache
   averageRating Float?       @default(0)
   totalReviews  Int          @default(0)
@@ -271,8 +269,6 @@ model ticket {
   description    String?
   weekdayPrice   Decimal  @db.Decimal(10, 2)
   weekendPrice   Decimal  @db.Decimal(10, 2)
-  facilityId     String
-  facility       facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   eventId        String?  // null for regular tickets, set for event-specific tickets
   event          event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
   isActive       Boolean  @default(true)
@@ -280,7 +276,6 @@ model ticket {
   updatedAt      DateTime @updatedAt
   purchases      ticketPurchase[]
 
-  @@index([facilityId])
   @@index([eventId])
   @@index([isActive])
 }
@@ -291,15 +286,12 @@ model event {
   description String?
   date        DateTime
   endDate     DateTime?
-  facilityId  String
-  facility    facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   tickets     ticket[]
-  maxCapacity Int?     // Override facility capacity for this event
+  maxCapacity Int?     // Max capacity for this event
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([facilityId])
   @@index([date])
   @@index([isActive])
 }

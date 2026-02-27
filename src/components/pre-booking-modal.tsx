@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CalendarDays, MapPin, Users, ArrowRight, ArrowLeft, Ticket, Palmtree } from "lucide-react";
+import { CalendarDays, MapPin, Users, ArrowRight, ArrowLeft, Ticket, Palmtree, Building2 } from "lucide-react";
 import { format, addDays, isBefore, startOfDay } from "date-fns";
 import { useRouter } from "next/navigation";
 
@@ -36,15 +36,15 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
     setCategoryType(category);
     setErrors({});
 
-    if (category === "function") {
-      // Function Hall -> go directly to tickets page
+    if (category === "tickets") {
+      // Tickets -> go directly to tickets page
       router.push("/tickets");
       onClose();
       resetForm();
       return;
     }
 
-    // For rooms and cottages, proceed to step 2 (date selection)
+    // For rooms, cottages, and function halls, proceed to step 2 (date selection)
     setStep(2);
   };
 
@@ -88,11 +88,11 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
     if (Object.keys(newErrors).length > 0) return;
 
     // Map category to facility types
-    const types = isRoom ? "ROOM" : "COTTAGE";
+    const types = isRoom ? "ROOM" : isCottage ? "COTTAGE" : "HALL";
 
     // For cottages (per use), set checkout to same day or next day
     const from = checkInDate;
-    const to = isRoom ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
+    const to = (isRoom || isHall) ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
 
     const params = new URLSearchParams({ from, to, types });
     router.push(`/browse/availability?${params.toString()}`);
@@ -111,7 +111,7 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
     }
   };
 
-  const isFormValid = isRoom
+  const isFormValid = (isRoom || isHall)
     ? checkInDate && checkOutDate
     : checkInDate; // Cottages only need one date
 
@@ -128,7 +128,7 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
             ) : (
               <>
                 <CalendarDays className="h-4 w-4 sm:h-5 sm:w-5 text-tropical-green" />
-                {isRoom ? "Select Your Stay Dates" : "Select Your Visit Date"}
+                {(isRoom || isHall) ? "Select Your Stay Dates" : "Select Your Visit Date"}
               </>
             )}
           </DialogTitle>
@@ -174,11 +174,25 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
                 className="w-full flex items-center gap-4 rounded-xl border-2 border-tropical-tan/20 p-4 hover:border-tropical-red hover:bg-tropical-red/5 transition-all active:scale-[0.98] text-left"
               >
                 <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center shrink-0">
-                  <Ticket className="h-6 w-6 text-white" />
+                  <Building2 className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
                   <span className="font-semibold text-base">Function Hall</span>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Buy tickets for events and gatherings</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Book a function hall for your event</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+
+              <button
+                onClick={() => handleCategorySelect("tickets")}
+                className="w-full flex items-center gap-4 rounded-xl border-2 border-tropical-tan/20 p-4 hover:border-tropical-yellow hover:bg-tropical-yellow/5 transition-all active:scale-[0.98] text-left"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center shrink-0">
+                  <Ticket className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <span className="font-semibold text-base">Tickets</span>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Buy resort admission & event tickets</p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground" />
               </button>
@@ -194,11 +208,11 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
                   Back
                 </button>
                 <span>•</span>
-                <span className="font-medium">{isRoom ? "Room Booking" : "Cottage Booking"}</span>
+                <span className="font-medium">{isRoom ? "Room Booking" : isHall ? "Function Hall Booking" : "Cottage Booking"}</span>
               </div>
 
-              {isRoom ? (
-                // Room: Check-in and Check-out dates
+              {(isRoom || isHall) ? (
+                // Room/Hall: Check-in and Check-out dates
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="checkIn" className="flex items-center gap-2 text-sm sm:text-base">
@@ -258,12 +272,12 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
                 <div className="bg-tropical-green/10 rounded-lg p-3 sm:p-4">
                   <h4 className="font-medium text-sm mb-1.5">Your Selection:</h4>
                   <div className="text-xs sm:text-sm space-y-1">
-                    {isRoom ? (
+                    {(isRoom || isHall) ? (
                       <p>📅 {format(new Date(checkInDate), "MMM dd, yyyy")} - {format(new Date(checkOutDate), "MMM dd, yyyy")}</p>
                     ) : (
                       <p>📅 {format(new Date(checkInDate), "MMM dd, yyyy")} (Day Use)</p>
                     )}
-                    <p>🏠 {isRoom ? "Room" : "Cottage"}</p>
+                    <p>🏠 {isRoom ? "Room" : isHall ? "Function Hall" : "Cottage"}</p>
                   </div>
                 </div>
               )}

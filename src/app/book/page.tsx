@@ -8,7 +8,7 @@ import { TropicalButton } from "@/components/tropical/tropical-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarDays, Clock, Users, Palmtree, ArrowRight, ArrowLeft, AlertCircle, Ticket } from "lucide-react";
+import { CalendarDays, Clock, Users, Palmtree, ArrowRight, ArrowLeft, AlertCircle, Ticket, Building2 } from "lucide-react";
 import { format, addDays } from "date-fns";
 
 export default function BookPage() {
@@ -33,9 +33,10 @@ function BookPageContent() {
 
   const isRoom = selectedType === "ROOM";
   const isCottage = selectedType === "COTTAGE";
+  const isHall = selectedType === "HALL";
 
   const handleTypeSelect = (type: string) => {
-    if (type === "HALL") {
+    if (type === "TICKETS") {
       router.push("/tickets");
       return;
     }
@@ -51,13 +52,13 @@ function BookPageContent() {
   };
 
   const handleSearchAvailability = () => {
-    if (isRoom && (!checkInDate || !checkOutDate)) return;
+    if ((isRoom || isHall) && (!checkInDate || !checkOutDate)) return;
     if (isCottage && !checkInDate) return;
 
     setIsLoading(true);
 
     const from = checkInDate;
-    const to = isRoom ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
+    const to = (isRoom || isHall) ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
 
     const params = new URLSearchParams({
       from,
@@ -68,7 +69,7 @@ function BookPageContent() {
     router.push(`/browse/availability?${params.toString()}`);
   };
 
-  const isFormValid = isRoom
+  const isFormValid = (isRoom || isHall)
     ? checkInDate && checkOutDate && new Date(checkOutDate) > new Date(checkInDate)
     : checkInDate;
 
@@ -90,14 +91,14 @@ function BookPageContent() {
             
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
               <span className="bg-gradient-to-r from-tropical-red via-tropical-yellow to-tropical-green bg-clip-text text-transparent">
-                {step === 1 ? "What Are You Looking For?" : isRoom ? "Select Your Stay Dates" : "Select Your Visit Date"}
+                {step === 1 ? "What Are You Looking For?" : (isRoom || isHall) ? "Select Your Stay Dates" : "Select Your Visit Date"}
               </span>
             </h1>
             
             <p className="text-xl text-tropical-black mb-8 max-w-2xl mx-auto font-medium drop-shadow-md bg-white/40 backdrop-blur-sm px-6 py-3 rounded-2xl">
               {step === 1
                 ? "Choose your facility type to get started"
-                : isRoom
+                : (isRoom || isHall)
                 ? "Pick your check-in and check-out dates"
                 : "Pick the date you'd like to visit"}
             </p>
@@ -120,12 +121,12 @@ function BookPageContent() {
               <Card className="shadow-xl border-0">
                 <CardHeader className="text-center pb-8">
                   <CardTitle className="text-3xl font-bold text-tropical-black">
-                    {step === 1 ? "Choose Your Facility" : isRoom ? "Room Booking" : "Cottage Day Use"}
+                    {step === 1 ? "Choose Your Facility" : isRoom ? "Room Booking" : isHall ? "Function Hall Booking" : "Cottage Day Use"}
                   </CardTitle>
                   <CardDescription className="text-lg text-tropical-black/90 font-medium">
                     {step === 1
                       ? "Select the type of facility you want to book"
-                      : isRoom
+                      : (isRoom || isHall)
                       ? "Select your check-in and check-out dates"
                       : "Select the date for your cottage visit"}
                   </CardDescription>
@@ -134,7 +135,7 @@ function BookPageContent() {
                 <CardContent className="space-y-8">
                   {/* STEP 1: Facility Type Selection */}
                   {step === 1 && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                       <button
                         type="button"
                         onClick={() => handleTypeSelect("ROOM")}
@@ -167,11 +168,24 @@ function BookPageContent() {
                         className="relative p-8 rounded-xl border-2 border-tropical-tan/20 hover:border-purple-400 hover:shadow-lg transition-all duration-300 text-left group"
                       >
                         <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                          <Ticket className="h-8 w-8 text-white" />
+                          <Building2 className="h-8 w-8 text-white" />
                         </div>
                         <h3 className="text-xl font-bold text-tropical-black mb-2">Function Hall</h3>
-                        <p className="text-sm text-tropical-black/70">Buy tickets for events and gatherings at the function hall</p>
+                        <p className="text-sm text-tropical-black/70">Book a function hall for your event or gathering</p>
                         <ArrowRight className="absolute top-4 right-4 h-5 w-5 text-gray-300 group-hover:text-purple-500 transition-colors" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleTypeSelect("TICKETS")}
+                        className="relative p-8 rounded-xl border-2 border-tropical-tan/20 hover:border-orange-400 hover:shadow-lg transition-all duration-300 text-left group"
+                      >
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+                          <Ticket className="h-8 w-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-tropical-black mb-2">Tickets</h3>
+                        <p className="text-sm text-tropical-black/70">Buy resort admission & event tickets</p>
+                        <ArrowRight className="absolute top-4 right-4 h-5 w-5 text-gray-300 group-hover:text-orange-500 transition-colors" />
                       </button>
                     </div>
                   )}
@@ -189,7 +203,7 @@ function BookPageContent() {
                         </button>
                       </div>
 
-                      {isRoom ? (
+                      {(isRoom || isHall) ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-3">
                             <Label htmlFor="checkin" className="text-base font-semibold flex items-center gap-2">
@@ -261,13 +275,13 @@ function BookPageContent() {
                             "Searching Availability..."
                           ) : (
                             <>
-                              Search Available {isRoom ? "Rooms" : "Cottages"}
+                              Search Available {isRoom ? "Rooms" : isHall ? "Function Halls" : "Cottages"}
                               <ArrowRight className="h-5 w-5 ml-2" />
                             </>
                           )}
                         </TropicalButton>
                         <p className="text-center text-sm text-tropical-black/60 mt-3">
-                          We'll show you only {isRoom ? "rooms" : "cottages"} available for your selected date{isRoom ? "s" : ""}
+                          We'll show you only {isRoom ? "rooms" : isHall ? "function halls" : "cottages"} available for your selected date{(isRoom || isHall) ? "s" : ""}
                         </p>
                       </div>
                     </>

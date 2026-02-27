@@ -9,7 +9,7 @@ export async function PUT(
   try {
     const { id } = params;
     const body = await request.json();
-    const { name, description, date, endDate, facilityId, maxCapacity, isActive } = body;
+    const { name, description, date, endDate, maxCapacity, isActive } = body;
 
     const event = await prisma.event.update({
       where: { id },
@@ -18,12 +18,10 @@ export async function PUT(
         ...(description !== undefined && { description }),
         ...(date !== undefined && { date: new Date(date) }),
         ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
-        ...(facilityId !== undefined && { facilityId }),
         ...(maxCapacity !== undefined && { maxCapacity: maxCapacity ? parseInt(maxCapacity) : null }),
         ...(isActive !== undefined && { isActive }),
       },
       include: {
-        facility: { select: { id: true, name: true } },
         tickets: true,
       },
     });

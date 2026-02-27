@@ -5,16 +5,12 @@ import { prisma } from "@/lib/prisma";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const facilityId = searchParams.get("facilityId");
     const includeInactive = searchParams.get("all") === "true";
     const upcoming = searchParams.get("upcoming") === "true";
 
     const where: any = {};
     if (!includeInactive) {
       where.isActive = true;
-    }
-    if (facilityId) {
-      where.facilityId = facilityId;
     }
     if (upcoming) {
       where.date = { gte: new Date() };
@@ -23,7 +19,6 @@ export async function GET(request: NextRequest) {
     const events = await prisma.event.findMany({
       where,
       include: {
-        facility: { select: { id: true, name: true } },
         tickets: {
           where: { isActive: true },
           include: {
@@ -45,9 +40,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, date, endDate, facilityId, maxCapacity } = body;
+    const { name, description, date, endDate, maxCapacity } = body;
 
-    if (!name || !date || !facilityId) {
+    if (!name || !date) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -57,11 +52,7 @@ export async function POST(request: NextRequest) {
         description: description || null,
         date: new Date(date),
         endDate: endDate ? new Date(endDate) : null,
-        facilityId,
         maxCapacity: maxCapacity ? parseInt(maxCapacity) : null,
-      },
-      include: {
-        facility: { select: { id: true, name: true } },
       },
     });
 

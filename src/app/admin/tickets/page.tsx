@@ -20,7 +20,6 @@ import {
   Edit,
   Calendar,
   DollarSign,
-  Building2,
   Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -31,10 +30,8 @@ interface TicketType {
   description: string | null;
   weekdayPrice: number;
   weekendPrice: number;
-  facilityId: string;
   eventId: string | null;
   isActive: boolean;
-  facility: { id: string; name: string; kind: string };
   event: { id: string; name: string; date: string } | null;
   _count: { purchases: number };
 }
@@ -45,22 +42,13 @@ interface EventType {
   description: string | null;
   date: string;
   endDate: string | null;
-  facilityId: string;
-  facility: { id: string; name: string };
   isActive: boolean;
   tickets: any[];
-}
-
-interface FacilityType {
-  id: string;
-  name: string;
-  kind: string;
 }
 
 export default function AdminTicketsPage() {
   const [tickets, setTickets] = useState<TicketType[]>([]);
   const [events, setEvents] = useState<EventType[]>([]);
-  const [halls, setHalls] = useState<FacilityType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
@@ -74,7 +62,6 @@ export default function AdminTicketsPage() {
     description: "",
     weekdayPrice: "",
     weekendPrice: "",
-    facilityId: "",
     eventId: "",
   });
 
@@ -84,27 +71,21 @@ export default function AdminTicketsPage() {
     description: "",
     date: "",
     endDate: "",
-    facilityId: "",
     maxCapacity: "",
   });
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [ticketsRes, eventsRes, facilitiesRes] = await Promise.all([
+      const [ticketsRes, eventsRes] = await Promise.all([
         fetch("/api/tickets?all=true"),
         fetch("/api/events?all=true"),
-        fetch("/api/facilities"),
       ]);
       const ticketsData = await ticketsRes.json();
       const eventsData = await eventsRes.json();
-      const facilitiesData = await facilitiesRes.json();
 
       setTickets(ticketsData.tickets || []);
       setEvents(eventsData.events || []);
-      // Filter only HALL facilities
-      const allFacilities = facilitiesData.items || [];
-      setHalls(allFacilities.filter((f: FacilityType) => f.kind === "HALL"));
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -161,7 +142,6 @@ export default function AdminTicketsPage() {
       description: ticket.description || "",
       weekdayPrice: String(ticket.weekdayPrice),
       weekendPrice: String(ticket.weekendPrice),
-      facilityId: ticket.facilityId,
       eventId: ticket.eventId || "",
     });
     setShowTicketModal(true);
@@ -173,7 +153,6 @@ export default function AdminTicketsPage() {
       description: "",
       weekdayPrice: "",
       weekendPrice: "",
-      facilityId: halls[0]?.id || "",
       eventId: "",
     });
   };
@@ -223,7 +202,6 @@ export default function AdminTicketsPage() {
       description: event.description || "",
       date: format(new Date(event.date), "yyyy-MM-dd"),
       endDate: event.endDate ? format(new Date(event.endDate), "yyyy-MM-dd") : "",
-      facilityId: event.facilityId,
       maxCapacity: event.tickets?.[0]?.maxCapacity || "",
     });
     setShowEventModal(true);
@@ -235,7 +213,6 @@ export default function AdminTicketsPage() {
       description: "",
       date: "",
       endDate: "",
-      facilityId: halls[0]?.id || "",
       maxCapacity: "",
     });
   };
@@ -262,7 +239,7 @@ export default function AdminTicketsPage() {
             Ticket Management
           </h1>
           <p className="text-gray-500 mt-1">
-            Manage tickets for the function hall — regular admission and event tickets
+            Manage resort-wide tickets — regular admission and event tickets
           </p>
         </div>
       </div>
@@ -337,10 +314,6 @@ export default function AdminTicketsPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-500">Weekend Price</span>
                         <span className="font-bold text-orange-600">₱{Number(ticket.weekendPrice).toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <Building2 className="h-3 w-3" />
-                        {ticket.facility.name}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -444,7 +417,6 @@ export default function AdminTicketsPage() {
                         <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
                           <span>{format(new Date(event.date), "MMMM dd, yyyy")}</span>
                           {event.endDate && <span>— {format(new Date(event.endDate), "MMMM dd, yyyy")}</span>}
-                          <Badge variant="outline">{event.facility.name}</Badge>
                         </div>
                         {event.description && (
                           <p className="text-sm text-gray-500 mt-2">{event.description}</p>
@@ -475,7 +447,6 @@ export default function AdminTicketsPage() {
                             description: "",
                             weekdayPrice: "",
                             weekendPrice: "",
-                            facilityId: event.facilityId,
                             eventId: event.id,
                           });
                           setShowTicketModal(true);
@@ -563,23 +534,6 @@ export default function AdminTicketsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ticketFacility">Function Hall *</Label>
-              <select
-                id="ticketFacility"
-                value={ticketForm.facilityId}
-                onChange={(e) => setTicketForm({ ...ticketForm, facilityId: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">Select a function hall</option>
-                {halls.map((hall) => (
-                  <option key={hall.id} value={hall.id}>
-                    {hall.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="ticketEvent">Event (optional)</Label>
               <select
                 id="ticketEvent"
@@ -603,7 +557,7 @@ export default function AdminTicketsPage() {
               <Button
                 className="flex-1 bg-tropical-green hover:bg-tropical-green/90"
                 onClick={handleSaveTicket}
-                disabled={!ticketForm.name || !ticketForm.weekdayPrice || !ticketForm.weekendPrice || !ticketForm.facilityId}
+                disabled={!ticketForm.name || !ticketForm.weekdayPrice || !ticketForm.weekendPrice}
               >
                 {editingTicket ? "Update" : "Create"} Ticket
               </Button>
@@ -663,23 +617,6 @@ export default function AdminTicketsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="eventFacility">Function Hall *</Label>
-              <select
-                id="eventFacility"
-                value={eventForm.facilityId}
-                onChange={(e) => setEventForm({ ...eventForm, facilityId: e.target.value })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="">Select a function hall</option>
-                {halls.map((hall) => (
-                  <option key={hall.id} value={hall.id}>
-                    {hall.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="eventCapacity">Max Capacity (optional)</Label>
               <Input
                 id="eventCapacity"
@@ -698,7 +635,7 @@ export default function AdminTicketsPage() {
               <Button
                 className="flex-1 bg-tropical-green hover:bg-tropical-green/90"
                 onClick={handleSaveEvent}
-                disabled={!eventForm.name || !eventForm.date || !eventForm.facilityId}
+                disabled={!eventForm.name || !eventForm.date}
               >
                 {editingEvent ? "Update" : "Create"} Event
               </Button>
