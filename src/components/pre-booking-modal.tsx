@@ -90,9 +90,9 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
     // Map category to facility types
     const types = isRoom ? "ROOM" : isCottage ? "COTTAGE" : "HALL";
 
-    // For cottages (per use), set checkout to same day or next day
+    // For cottages and halls (day use), set checkout to next day
     const from = checkInDate;
-    const to = (isRoom || isHall) ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
+    const to = isRoom ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
 
     const params = new URLSearchParams({ from, to, types });
     router.push(`/browse/availability?${params.toString()}`);
@@ -111,9 +111,9 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
     }
   };
 
-  const isFormValid = (isRoom || isHall)
+  const isFormValid = isRoom
     ? checkInDate && checkOutDate
-    : checkInDate; // Cottages only need one date
+    : checkInDate; // Cottages and halls only need one date (day use)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -128,7 +128,7 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
             ) : (
               <>
                 <CalendarDays className="h-4 w-4 sm:h-5 sm:w-5 text-tropical-green" />
-                {(isRoom || isHall) ? "Select Your Stay Dates" : "Select Your Visit Date"}
+                {isRoom ? "Select Your Stay Dates" : "Select Your Visit Date"}
               </>
             )}
           </DialogTitle>
@@ -209,10 +209,11 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
                 </button>
                 <span>•</span>
                 <span className="font-medium">{isRoom ? "Room Booking" : isHall ? "Function Hall Booking" : "Cottage Booking"}</span>
+
               </div>
 
-              {(isRoom || isHall) ? (
-                // Room/Hall: Check-in and Check-out dates
+              {isRoom ? (
+                // Room: Check-in and Check-out dates
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="checkIn" className="flex items-center gap-2 text-sm sm:text-base">
@@ -248,7 +249,7 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
                   </div>
                 </div>
               ) : (
-                // Cottage: Just a single date (day use)
+                // Cottage / Hall: Just a single date (day use)
                 <div className="space-y-2">
                   <Label htmlFor="visitDate" className="flex items-center gap-2 text-sm sm:text-base">
                     <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -263,7 +264,7 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
                     className={`border-2 text-sm sm:text-base h-10 sm:h-11 ${errors.checkIn ? "border-red-500" : "border-tropical-green/30"}`}
                   />
                   {errors.checkIn && <p className="text-xs text-red-500">{errors.checkIn}</p>}
-                  <p className="text-xs text-muted-foreground">Cottages are for day use only</p>
+                  <p className="text-xs text-muted-foreground">{isHall ? "Function halls are for day use only" : "Cottages are for day use only"}</p>
                 </div>
               )}
 
@@ -272,7 +273,7 @@ export function PreBookingModal({ isOpen, onClose }: PreBookingModalProps) {
                 <div className="bg-tropical-green/10 rounded-lg p-3 sm:p-4">
                   <h4 className="font-medium text-sm mb-1.5">Your Selection:</h4>
                   <div className="text-xs sm:text-sm space-y-1">
-                    {(isRoom || isHall) ? (
+                    {isRoom ? (
                       <p>📅 {format(new Date(checkInDate), "MMM dd, yyyy")} - {format(new Date(checkOutDate), "MMM dd, yyyy")}</p>
                     ) : (
                       <p>📅 {format(new Date(checkInDate), "MMM dd, yyyy")} (Day Use)</p>

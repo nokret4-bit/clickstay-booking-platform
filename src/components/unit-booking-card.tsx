@@ -162,7 +162,7 @@ export function UnitBookingCard({
                 </span>
               </div>
               <div className="text-sm text-muted-foreground">
-                {isPerUse ? "Day use" : `${nights} night${nights !== 1 ? "s" : ""}`}
+                {(isPerUse || isPerHead) ? "Day use" : `${nights} night${nights !== 1 ? "s" : ""}`}
               </div>
             </div>
 

@@ -126,7 +126,7 @@ export function FacilityCardWithAvailability({
           </div>
           <div className="text-xs text-tropical-black/60 font-medium">
             {isPerHead
-              ? `total for ${facility.capacity} guests`
+              ? `day use • ${facility.capacity} guests`
               : isPerUse
               ? 'day use'
               : `total for ${actualNights} night${actualNights !== 1 ? 's' : ''}`}

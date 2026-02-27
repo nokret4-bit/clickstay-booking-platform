@@ -52,13 +52,13 @@ function BookPageContent() {
   };
 
   const handleSearchAvailability = () => {
-    if ((isRoom || isHall) && (!checkInDate || !checkOutDate)) return;
-    if (isCottage && !checkInDate) return;
+    if (isRoom && (!checkInDate || !checkOutDate)) return;
+    if ((isCottage || isHall) && !checkInDate) return;
 
     setIsLoading(true);
 
     const from = checkInDate;
-    const to = (isRoom || isHall) ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
+    const to = isRoom ? checkOutDate : format(addDays(new Date(checkInDate), 1), "yyyy-MM-dd");
 
     const params = new URLSearchParams({
       from,
@@ -69,7 +69,7 @@ function BookPageContent() {
     router.push(`/browse/availability?${params.toString()}`);
   };
 
-  const isFormValid = (isRoom || isHall)
+  const isFormValid = isRoom
     ? checkInDate && checkOutDate && new Date(checkOutDate) > new Date(checkInDate)
     : checkInDate;
 
@@ -91,14 +91,14 @@ function BookPageContent() {
             
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
               <span className="bg-gradient-to-r from-tropical-red via-tropical-yellow to-tropical-green bg-clip-text text-transparent">
-                {step === 1 ? "What Are You Looking For?" : (isRoom || isHall) ? "Select Your Stay Dates" : "Select Your Visit Date"}
+                {step === 1 ? "What Are You Looking For?" : isRoom ? "Select Your Stay Dates" : "Select Your Visit Date"}
               </span>
             </h1>
             
             <p className="text-xl text-tropical-black mb-8 max-w-2xl mx-auto font-medium drop-shadow-md bg-white/40 backdrop-blur-sm px-6 py-3 rounded-2xl">
               {step === 1
                 ? "Choose your facility type to get started"
-                : (isRoom || isHall)
+                : isRoom
                 ? "Pick your check-in and check-out dates"
                 : "Pick the date you'd like to visit"}
             </p>
@@ -126,9 +126,9 @@ function BookPageContent() {
                   <CardDescription className="text-lg text-tropical-black/90 font-medium">
                     {step === 1
                       ? "Select the type of facility you want to book"
-                      : (isRoom || isHall)
+                      : isRoom
                       ? "Select your check-in and check-out dates"
-                      : "Select the date for your cottage visit"}
+                      : `Select the date for your ${isHall ? 'function hall' : 'cottage'} visit`}
                   </CardDescription>
                 </CardHeader>
 
@@ -203,7 +203,7 @@ function BookPageContent() {
                         </button>
                       </div>
 
-                      {(isRoom || isHall) ? (
+                      {isRoom ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-3">
                             <Label htmlFor="checkin" className="text-base font-semibold flex items-center gap-2">
@@ -260,7 +260,7 @@ function BookPageContent() {
                             onChange={(e) => setCheckInDate(e.target.value)}
                             className="w-full h-14 px-4 border-2 border-tropical-tan/20 rounded-xl focus:border-tropical-green focus:outline-none text-lg"
                           />
-                          <p className="text-sm text-tropical-black/50">Cottages are for day use only — no overnight stays</p>
+                          <p className="text-sm text-tropical-black/50">{isHall ? "Function halls are for day use only" : "Cottages are for day use only — no overnight stays"}</p>
                         </div>
                       )}
 
@@ -281,7 +281,7 @@ function BookPageContent() {
                           )}
                         </TropicalButton>
                         <p className="text-center text-sm text-tropical-black/60 mt-3">
-                          We'll show you only {isRoom ? "rooms" : isHall ? "function halls" : "cottages"} available for your selected date{(isRoom || isHall) ? "s" : ""}
+                          We'll show you only {isRoom ? "rooms" : isHall ? "function halls" : "cottages"} available for your selected date{isRoom ? "s" : ""}
                         </p>
                       </div>
                     </>
