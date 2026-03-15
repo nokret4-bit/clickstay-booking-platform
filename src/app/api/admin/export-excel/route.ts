@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
 import { format } from "date-fns";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 export async function GET(request: NextRequest) {
   try {
@@ -125,6 +125,105 @@ export async function GET(request: NextRequest) {
       { wch: 30 }, // Notes
     ];
 
+    // Apply professional styling
+    const headerRow = 10; // Row with column headers
+    const dataStartRow = 11;
+    const totalRow = dataStartRow + bookings.length + 1;
+
+    // Style for title (MANUEL RESORT)
+    if (ws['A1']) {
+      ws['A1'].s = {
+        font: { bold: true, sz: 16, color: { rgb: "1F4E78" } },
+        alignment: { horizontal: "left", vertical: "center" }
+      };
+    }
+
+    // Style for report title
+    if (ws['A2']) {
+      ws['A2'].s = {
+        font: { bold: true, sz: 14, color: { rgb: "1F4E78" } },
+        alignment: { horizontal: "left", vertical: "center" }
+      };
+    }
+
+    // Style for section headers (Report Summary, Booking Details)
+    ['A5', 'A9'].forEach(cell => {
+      if (ws[cell]) {
+        ws[cell].s = {
+          font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "4472C4" } },
+          alignment: { horizontal: "left", vertical: "center" }
+        };
+      }
+    });
+
+    // Style for column headers (row 10)
+    const columns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P'];
+    columns.forEach(col => {
+      const cellRef = `${col}${headerRow}`;
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+          fill: { fgColor: { rgb: "4472C4" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+          }
+        };
+      }
+    });
+
+    // Style for data rows with alternating colors and borders
+    for (let i = 0; i < bookings.length; i++) {
+      const rowNum = dataStartRow + i;
+      const isEven = i % 2 === 0;
+      
+      columns.forEach(col => {
+        const cellRef = `${col}${rowNum}`;
+        if (ws[cellRef]) {
+          ws[cellRef].s = {
+            fill: { fgColor: { rgb: isEven ? "FFFFFF" : "F2F2F2" } },
+            alignment: { horizontal: col === 'L' ? "right" : "left", vertical: "center" },
+            border: {
+              top: { style: "thin", color: { rgb: "D3D3D3" } },
+              bottom: { style: "thin", color: { rgb: "D3D3D3" } },
+              left: { style: "thin", color: { rgb: "D3D3D3" } },
+              right: { style: "thin", color: { rgb: "D3D3D3" } }
+            }
+          };
+          
+          // Format amount column as currency
+          if (col === 'L' && typeof ws[cellRef].v === 'number') {
+            ws[cellRef].z = '"₱"#,##0.00';
+          }
+        }
+      });
+    }
+
+    // Style for total row
+    ['A', 'J', 'K'].forEach(col => {
+      const cellRef = `${col}${totalRow}`;
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          font: { bold: true, sz: 11 },
+          fill: { fgColor: { rgb: "E7E6E6" } },
+          alignment: { horizontal: col === 'K' ? "right" : "left", vertical: "center" },
+          border: {
+            top: { style: "medium", color: { rgb: "000000" } },
+            bottom: { style: "medium", color: { rgb: "000000" } }
+          }
+        };
+        
+        // Format total amount as currency
+        if (col === 'K' && typeof ws[cellRef].v === 'number') {
+          ws[cellRef].z = '"₱"#,##0.00';
+        }
+      }
+    });
+
     // Add worksheet to workbook
     XLSX.utils.book_append_sheet(wb, ws, "Booking Report");
 
@@ -231,6 +330,150 @@ async function exportSummaryExcel(where: any) {
     { wch: 12 },
     { wch: 15 },
   ];
+
+  // Apply professional styling to summary report
+  // Style for title (MANUEL RESORT)
+  if (ws['A1']) {
+    ws['A1'].s = {
+      font: { bold: true, sz: 16, color: { rgb: "1F4E78" } },
+      alignment: { horizontal: "left", vertical: "center" }
+    };
+  }
+
+  // Style for report title
+  if (ws['A2']) {
+    ws['A2'].s = {
+      font: { bold: true, sz: 14, color: { rgb: "1F4E78" } },
+      alignment: { horizontal: "left", vertical: "center" }
+    };
+  }
+
+  // Style for section headers (Revenue Summary, Revenue by Status, Revenue by Facility)
+  ['A5', 'A9', 'A' + (10 + bookingsByStatus.length + 2)].forEach(cell => {
+    if (ws[cell]) {
+      ws[cell].s = {
+        font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4472C4" } },
+        alignment: { horizontal: "left", vertical: "center" }
+      };
+    }
+  });
+
+  // Style for column headers
+  const headerRows = [10, 10 + bookingsByStatus.length + 3];
+  headerRows.forEach(row => {
+    ['A', 'B', 'C', 'D'].forEach(col => {
+      const cellRef = `${col}${row}`;
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+          fill: { fgColor: { rgb: "4472C4" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+          }
+        };
+      }
+    });
+  });
+
+  // Style data rows with alternating colors
+  const statusDataStart = 11;
+  for (let i = 0; i < bookingsByStatus.length; i++) {
+    const rowNum = statusDataStart + i;
+    const isEven = i % 2 === 0;
+    
+    ['A', 'B', 'C', 'D'].forEach(col => {
+      const cellRef = `${col}${rowNum}`;
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          fill: { fgColor: { rgb: isEven ? "FFFFFF" : "F2F2F2" } },
+          alignment: { horizontal: col === 'D' ? "right" : "left", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "D3D3D3" } },
+            bottom: { style: "thin", color: { rgb: "D3D3D3" } },
+            left: { style: "thin", color: { rgb: "D3D3D3" } },
+            right: { style: "thin", color: { rgb: "D3D3D3" } }
+          }
+        };
+        
+        // Format revenue as currency
+        if (col === 'D' && typeof ws[cellRef].v === 'number') {
+          ws[cellRef].z = '"₱"#,##0.00';
+        }
+      }
+    });
+  }
+
+  // Style facility data rows
+  const facilityDataStart = 10 + bookingsByStatus.length + 4;
+  for (let i = 0; i < bookingsByType.length; i++) {
+    const rowNum = facilityDataStart + i;
+    const isEven = i % 2 === 0;
+    
+    ['A', 'B', 'C', 'D'].forEach(col => {
+      const cellRef = `${col}${rowNum}`;
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          fill: { fgColor: { rgb: isEven ? "FFFFFF" : "F2F2F2" } },
+          alignment: { horizontal: col === 'D' ? "right" : "left", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "D3D3D3" } },
+            bottom: { style: "thin", color: { rgb: "D3D3D3" } },
+            left: { style: "thin", color: { rgb: "D3D3D3" } },
+            right: { style: "thin", color: { rgb: "D3D3D3" } }
+          }
+        };
+        
+        // Format revenue as currency
+        if (col === 'D' && typeof ws[cellRef].v === 'number') {
+          ws[cellRef].z = '"₱"#,##0.00';
+        }
+      }
+    });
+  }
+
+  // Style total rows
+  const totalRows = [
+    statusDataStart + bookingsByStatus.length,
+    facilityDataStart + bookingsByType.length
+  ];
+  
+  totalRows.forEach(row => {
+    ['A', 'D'].forEach(col => {
+      const cellRef = `${col}${row}`;
+      if (ws[cellRef]) {
+        ws[cellRef].s = {
+          font: { bold: true, sz: 11 },
+          fill: { fgColor: { rgb: "E7E6E6" } },
+          alignment: { horizontal: col === 'D' ? "right" : "left", vertical: "center" },
+          border: {
+            top: { style: "medium", color: { rgb: "000000" } },
+            bottom: { style: "medium", color: { rgb: "000000" } }
+          }
+        };
+        
+        // Format total as currency
+        if (col === 'D' && typeof ws[cellRef].v === 'number') {
+          ws[cellRef].z = '"₱"#,##0.00';
+        }
+      }
+    });
+  });
+
+  // Style summary values
+  if (ws['D7']) {
+    ws['D7'].s = {
+      font: { bold: true, sz: 11 },
+      alignment: { horizontal: "right", vertical: "center" }
+    };
+    if (typeof ws['D7'].v === 'number') {
+      ws['D7'].z = '"₱"#,##0.00';
+    }
+  }
 
   XLSX.utils.book_append_sheet(wb, ws, "Summary Report");
 
