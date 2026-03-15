@@ -136,10 +136,11 @@ export default function AdminReportsPage() {
     }
   };
 
-  const handleExport = async (type: 'bookings' | 'summary' = 'bookings') => {
+  const handleExport = async (type: 'bookings' | 'summary' = 'bookings', format: 'csv' | 'excel' = 'csv') => {
     setExporting(true);
     try {
-      const url = `/api/admin/export${type === 'summary' ? '?type=summary' : ''}`;
+      const endpoint = format === 'excel' ? '/api/admin/export-excel' : '/api/admin/export';
+      const url = `${endpoint}${type === 'summary' ? '?type=summary' : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -155,9 +156,10 @@ export default function AdminReportsPage() {
       const blob = await response.blob();
       
       const contentDisposition = response.headers.get('Content-Disposition');
+      const defaultExt = format === 'excel' ? 'xlsx' : 'csv';
       const filename = contentDisposition
-        ? (contentDisposition.split('filename=')[1]?.replace(/"/g, '') || `${type}-export-${new Date().toISOString().split('T')[0]}.csv`)
-        : `${type}-export-${new Date().toISOString().split('T')[0]}.csv`;
+        ? (contentDisposition.split('filename=')[1]?.replace(/"/g, '') || `${type}-export-${new Date().toISOString().split('T')[0]}.${defaultExt}`)
+        : `${type}-export-${new Date().toISOString().split('T')[0]}.${defaultExt}`;
 
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -299,7 +301,16 @@ export default function AdminReportsPage() {
               </Button>
               <Button 
                 size="sm"
-                onClick={() => handleExport('bookings')}
+                onClick={() => handleExport('bookings', 'excel')}
+                disabled={exporting}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+              >
+                <Download className="h-4 w-4 mr-1.5" />
+                {exporting ? 'Exporting...' : 'Export Excel'}
+              </Button>
+              <Button 
+                size="sm"
+                onClick={() => handleExport('bookings', 'csv')}
                 disabled={exporting}
                 className="bg-green-600 hover:bg-green-700 text-white font-medium"
               >
