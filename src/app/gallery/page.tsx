@@ -3,6 +3,8 @@ import { Footer } from "@/components/footer";
 import { Camera, Palmtree } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 type GalleryImage = {
   id: string;
   title: string;

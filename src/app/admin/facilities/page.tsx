@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Building2, Users, Eye, Edit, Plus } from "lucide-react";
 import { DeleteFacilityButton } from "@/components/delete-facility-button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminFacilitiesPage() {
   const session = await getServerSession();
   if (!session) redirect("/login");

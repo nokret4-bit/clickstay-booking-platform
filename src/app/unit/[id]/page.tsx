@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Star } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 interface UnitPageProps {
   params: Promise<{
     id: string;

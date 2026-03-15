@@ -12,6 +12,8 @@ import { BookingStatusChecker } from "@/components/booking-status-checker";
 import Link from "next/link";
 import { Star, CheckCircle } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 interface BookingPageProps {
   params: Promise<{
     code: string;

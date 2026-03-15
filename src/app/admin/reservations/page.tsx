@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { EditBookingButton } from "@/components/edit-booking-button";
 import { DeleteBookingButton } from "@/components/delete-booking-button";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminReservationsPage() {
   const session = await getServerSession();
 

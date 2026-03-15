@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Banknote, Users, Building2 } from "lucide-react";
 import { BookingStatus } from "@prisma/client";
+import { getServerSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
 

@@ -8,6 +8,8 @@ import { TropicalButton } from "@/components/tropical/tropical-button";
 import { FacilityCard } from "@/components/facility-card";
 import { Search, Palmtree } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 async function FacilitiesList({ search }: { search: string | undefined }) {
   const facilities = await prisma.facility.findMany({
     where: { isActive: true },
