@@ -54,6 +54,8 @@ export async function PUT(
         amenities: body.amenities,
         rules: body.rules,
         freeAmenities: body.freeAmenities,
+        extraAdultRate: body.extraAdultRate || null,
+        extraChildRate: body.extraChildRate || null,
         isActive: body.isActive,
         updatedAt: new Date(),
       },

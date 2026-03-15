@@ -15,6 +15,8 @@ model booking {
   startDate     DateTime
   endDate       DateTime
   guests        Int           @default(1)
+  extraAdults   Int           @default(0)
+  extraChildren Int           @default(0)
   status        BookingStatus @default(PENDING)
   customerName  String
   customerEmail String
@@ -66,6 +68,8 @@ model facility {
   amenities     String[]
   rules         String[]     @default([])
   freeAmenities String[]     @default([])
+  extraAdultRate  Decimal?   @db.Decimal(10, 2)  // Additional charge per extra adult
+  extraChildRate  Decimal?   @db.Decimal(10, 2)  // Additional charge per extra child
   isActive      Boolean      @default(true)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime

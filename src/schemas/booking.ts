@@ -4,6 +4,8 @@ export const BookingQuoteSchema = z.object({
   unitId: z.string().min(1, "Unit ID is required"),
   startDate: z.string().datetime("Invalid start date"),
   endDate: z.string().datetime("Invalid end date"),
+  extraAdults: z.number().int().min(0).default(0),
+  extraChildren: z.number().int().min(0).default(0),
 });
 
 export const CreateBookingSchema = z.object({
@@ -22,6 +24,8 @@ export const CreateBookingSchema = z.object({
   paymentType: z.enum(["FULL", "PARTIAL"]).default("FULL"),
   depositAmount: z.number().optional().nullable(),
   holdId: z.string().optional(),
+  extraAdults: z.number().int().min(0).default(0),
+  extraChildren: z.number().int().min(0).default(0),
 });
 
 export const CancelBookingSchema = z.object({

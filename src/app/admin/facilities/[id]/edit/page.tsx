@@ -31,11 +31,13 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
     description: "",
     capacity: 1,
     price: 0,
-    pricingType: "PER_NIGHT" as "PER_NIGHT" | "PER_HEAD",
+    pricingType: "PER_NIGHT" as "PER_NIGHT" | "PER_HEAD" | "PER_USE",
     photos: [] as string[],
     amenities: [] as string[],
     rules: [] as string[],
     freeAmenities: [] as string[],
+    extraAdultRate: 0,
+    extraChildRate: 0,
     isActive: true,
   });
 
@@ -59,6 +61,8 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
           amenities: data.amenities || [],
           rules: data.rules || [],
           freeAmenities: data.freeAmenities || [],
+          extraAdultRate: Number(data.extraAdultRate) || 0,
+          extraChildRate: Number(data.extraChildRate) || 0,
           isActive: data.isActive ?? true,
         });
       }
@@ -225,6 +229,38 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
                   className="h-11 text-base"
                   placeholder="0.00"
                 />
+              </div>
+
+              {/* Additional Guest Rates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="extraAdultRate" className="text-sm font-semibold">Extra Adult Rate (₱)</Label>
+                  <Input
+                    id="extraAdultRate"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={formData.extraAdultRate}
+                    onChange={(e) => setFormData({ ...formData, extraAdultRate: Number(e.target.value) })}
+                    className="h-11 text-base"
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">Charge per extra adult per night</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="extraChildRate" className="text-sm font-semibold">Extra Child Rate (₱)</Label>
+                  <Input
+                    id="extraChildRate"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={formData.extraChildRate}
+                    onChange={(e) => setFormData({ ...formData, extraChildRate: Number(e.target.value) })}
+                    className="h-11 text-base"
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">Charge per extra child per night</p>
+                </div>
               </div>
 
               <div className="space-y-2">

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate pricing
-    const pricing = await calculatePrice(validated.unitId, startDate, endDate);
+    const pricing = await calculatePrice(validated.unitId, startDate, endDate, undefined, validated.extraAdults, validated.extraChildren);
 
     // Generate a hold ID (can be used to track the quote)
     const holdId = generateBookingCode();

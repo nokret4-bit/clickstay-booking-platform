@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate pricing
-    const pricing = await calculatePrice(validated.unitId, startDate, endDate);
+    const pricing = await calculatePrice(validated.unitId, startDate, endDate, undefined, validated.extraAdults, validated.extraChildren);
 
     // Create booking with AWAITING_PAYMENT status
     const bookingCode = generateBookingCode();
@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
         startDate,
         endDate,
         guests: 1,
+        extraAdults: validated.extraAdults || 0,
+        extraChildren: validated.extraChildren || 0,
         status: BookingStatus.PENDING,
         customerName: validated.customerName,
         customerEmail: validated.customerEmail,

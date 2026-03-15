@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowLeft, Calendar, Users, MapPin, Clock, Shield, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MapPin, Clock, Shield, CheckCircle, Plus, Minus, UserPlus } from "lucide-react";
 import { DatePickerWithAvailability } from "@/components/date-picker-with-availability";
 
 function CheckoutContent() {
@@ -27,8 +27,21 @@ function CheckoutContent() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
+  const [extraAdults, setExtraAdults] = useState(0);
+  const [extraChildren, setExtraChildren] = useState(0);
   const [paymentType, setPaymentType] = useState<"FULL" | "PARTIAL">("FULL");
-  const [quote, setQuote] = useState<{ totalAmount: number; currency: string } | null>(null);
+  const [quote, setQuote] = useState<{
+    subtotal: number;
+    extraAdultCharge: number;
+    extraChildCharge: number;
+    taxAmount: number;
+    feeAmount: number;
+    totalAmount: number;
+    currency: string;
+    nights?: number;
+    extraAdultRate?: number;
+    extraChildRate?: number;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [datesAvailable, setDatesAvailable] = useState(true);
@@ -110,6 +123,8 @@ function CheckoutContent() {
           unitId,
           startDate: new Date(startDate).toISOString(),
           endDate: new Date(endDate).toISOString(),
+          extraAdults,
+          extraChildren,
         }),
       });
 
@@ -158,6 +173,8 @@ function CheckoutContent() {
           specialRequests,
           paymentType,
           depositAmount: paymentType === "PARTIAL" ? depositAmount : null,
+          extraAdults,
+          extraChildren,
         }),
       });
 
@@ -212,7 +229,7 @@ function CheckoutContent() {
     if (startDate && endDate) {
       handleGetQuote();
     }
-  }, [startDate, endDate, datesAvailable]);
+  }, [startDate, endDate, datesAvailable, extraAdults, extraChildren]);
 
   if (!unitId) {
     return (
@@ -323,6 +340,106 @@ function CheckoutContent() {
                         placeholder="Any special requirements or preferences"
                       />
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Additional Guests */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <UserPlus className="h-5 w-5" />
+                      Additional Guests
+                    </CardTitle>
+                    <CardDescription>
+                      Add extra guests beyond the base capacity{facility ? ` (${facility.capacity} included)` : ''}. Additional charges apply.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Extra Adults */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <div className="font-medium">Extra Adults</div>
+                        <div className="text-sm text-muted-foreground">
+                          {facility?.extraAdultRate
+                            ? `₱${Number(facility.extraAdultRate).toLocaleString()} per adult / night`
+                            : 'No additional charge set'}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setExtraAdults(Math.max(0, extraAdults - 1))}
+                          disabled={extraAdults === 0}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="text-lg font-semibold w-8 text-center">{extraAdults}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setExtraAdults(extraAdults + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Extra Children */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <div className="font-medium">Extra Children</div>
+                        <div className="text-sm text-muted-foreground">
+                          {facility?.extraChildRate
+                            ? `₱${Number(facility.extraChildRate).toLocaleString()} per child / night`
+                            : 'No additional charge set'}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setExtraChildren(Math.max(0, extraChildren - 1))}
+                          disabled={extraChildren === 0}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="text-lg font-semibold w-8 text-center">{extraChildren}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => setExtraChildren(extraChildren + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {(extraAdults > 0 || extraChildren > 0) && quote && (
+                      <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg text-sm">
+                        <div className="font-medium text-blue-900 mb-1">Additional Guest Charges:</div>
+                        {extraAdults > 0 && quote.extraAdultCharge > 0 && (
+                          <div className="flex justify-between text-blue-800">
+                            <span>{extraAdults} extra adult{extraAdults > 1 ? 's' : ''} × ₱{quote.extraAdultRate?.toLocaleString()} × {nightsCount} night{nightsCount > 1 ? 's' : ''}</span>
+                            <span className="font-semibold">₱{quote.extraAdultCharge.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {extraChildren > 0 && quote.extraChildCharge > 0 && (
+                          <div className="flex justify-between text-blue-800">
+                            <span>{extraChildren} extra child{extraChildren > 1 ? 'ren' : ''} × ₱{quote.extraChildRate?.toLocaleString()} × {nightsCount} night{nightsCount > 1 ? 's' : ''}</span>
+                            <span className="font-semibold">₱{quote.extraChildCharge.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -462,8 +579,32 @@ function CheckoutContent() {
                       </div>
 
                       {quote && (
-                        <div className="border-t pt-4">
-                          <div className="flex justify-between items-center mb-2">
+                        <div className="border-t pt-4 space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Base price</span>
+                            <span>{formatCurrency(quote.subtotal, quote.currency)}</span>
+                          </div>
+                          {quote.extraAdultCharge > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span>Extra adults ({extraAdults})</span>
+                              <span>+{formatCurrency(quote.extraAdultCharge, quote.currency)}</span>
+                            </div>
+                          )}
+                          {quote.extraChildCharge > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span>Extra children ({extraChildren})</span>
+                              <span>+{formatCurrency(quote.extraChildCharge, quote.currency)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>Tax (12%)</span>
+                            <span>{formatCurrency(quote.taxAmount, quote.currency)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>Service fee (5%)</span>
+                            <span>{formatCurrency(quote.feeAmount, quote.currency)}</span>
+                          </div>
+                          <div className="flex justify-between items-center pt-2 border-t">
                             <span className="font-medium">Total Amount:</span>
                             <span className="text-2xl font-bold text-primary">
                               {formatCurrency(quote.totalAmount, quote.currency)}

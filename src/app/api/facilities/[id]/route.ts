@@ -24,6 +24,8 @@ export async function GET(
         amenities: true,
         rules: true,
         freeAmenities: true,
+        extraAdultRate: true,
+        extraChildRate: true,
         averageRating: true,
         totalReviews: true,
       },

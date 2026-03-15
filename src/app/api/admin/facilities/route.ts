@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
         amenities: body.amenities || [],
         rules: body.rules || [],
         freeAmenities: body.freeAmenities || [],
+        extraAdultRate: body.extraAdultRate || null,
+        extraChildRate: body.extraChildRate || null,
         isActive: body.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),

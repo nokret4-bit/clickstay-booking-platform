@@ -22,11 +22,13 @@ export default function NewFacilityPage() {
     description: "",
     capacity: 1,
     price: 0,
-    pricingType: "PER_NIGHT" as "PER_NIGHT" | "PER_HEAD",
+    pricingType: "PER_NIGHT" as "PER_NIGHT" | "PER_HEAD" | "PER_USE",
     photos: [] as string[],
     amenities: [] as string[],
     rules: [] as string[],
     freeAmenities: [] as string[],
+    extraAdultRate: 0,
+    extraChildRate: 0,
     isActive: true,
   });
   const [uploading, setUploading] = useState(false);
@@ -210,6 +212,38 @@ export default function NewFacilityPage() {
                   className="h-11 text-base"
                   placeholder="0.00"
                 />
+              </div>
+
+              {/* Additional Guest Rates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="extraAdultRate" className="text-sm font-semibold">Extra Adult Rate (₱)</Label>
+                  <Input
+                    id="extraAdultRate"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.extraAdultRate}
+                    onChange={(e) => setForm((f) => ({ ...f, extraAdultRate: Number(e.target.value) }))}
+                    className="h-11 text-base"
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">Charge per extra adult per night</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="extraChildRate" className="text-sm font-semibold">Extra Child Rate (₱)</Label>
+                  <Input
+                    id="extraChildRate"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={form.extraChildRate}
+                    onChange={(e) => setForm((f) => ({ ...f, extraChildRate: Number(e.target.value) }))}
+                    className="h-11 text-base"
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-muted-foreground">Charge per extra child per night</p>
+                </div>
               </div>
 
               <div className="space-y-2">
