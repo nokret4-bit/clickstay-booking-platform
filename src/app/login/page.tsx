@@ -34,11 +34,9 @@ export default function LoginPage() {
         const response = await fetch("/api/auth/session");
         const session = await response.json();
         
-        // Redirect based on role
-        if (session?.user?.role === "ADMIN") {
+        // Redirect based on role - all staff/admin go to dashboard first
+        if (session?.user?.role === "ADMIN" || session?.user?.role === "STAFF") {
           router.push("/dashboard");
-        } else if (session?.user?.role === "STAFF") {
-          router.push(getDefaultStaffLanding(session?.user?.permissions));
         } else {
           router.push("/");
         }

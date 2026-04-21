@@ -66,17 +66,24 @@ export function Navbar() {
           
           {session?.user ? (
             <>
+              {/* Show Dashboard for Admin and Staff */}
+              {showStaffLinks && (
+                <Link href="/dashboard">
+                  <Button variant="outline" className="font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl">Dashboard</Button>
+                </Link>
+              )}
+              
               {/* Show Cashier for Admin and Staff */}
               {showStaffLinks && (
                 <Link href="/cashier">
-                  <Button variant="outline" className="font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl">Cashier</Button>
+                  <Button variant="outline" className="font-semibold border-2 border-tropical-yellow text-tropical-yellow hover:bg-tropical-yellow hover:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl">Cashier</Button>
                 </Link>
               )}
               
               {/* Show Management Portal only for Admin */}
               {showAdminLinks && (
                 <Link href="/admin">
-                  <Button variant="outline" className="font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl">Portal</Button>
+                  <Button variant="outline" className="font-semibold border-2 border-tropical-red text-tropical-red hover:bg-tropical-red hover:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl">Portal</Button>
                 </Link>
               )}
               
@@ -136,10 +143,19 @@ export function Navbar() {
 
               {session?.user ? (
                 <>
+                  {/* Show Dashboard for Admin and Staff */}
+                  {showStaffLinks && (
+                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
+                        Dashboard
+                      </Button>
+                    </Link>
+                  )}
+                  
                   {/* Show Cashier for Admin and Staff */}
                   {showStaffLinks && (
                     <Link href="/cashier" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
+                      <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-yellow text-tropical-yellow hover:bg-tropical-yellow hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
                         Cashier
                       </Button>
                     </Link>
@@ -148,7 +164,7 @@ export function Navbar() {
                   {/* Show Management Portal only for Admin */}
                   {showAdminLinks && (
                     <Link href="/admin" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
+                      <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-red text-tropical-red hover:bg-tropical-red hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
                         Portal
                       </Button>
                     </Link>

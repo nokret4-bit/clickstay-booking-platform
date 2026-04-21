@@ -77,14 +77,7 @@ export function hasPermission(
 }
 
 export function getDefaultStaffLanding(rawPermissions: unknown): string {
-  const permissions = normalizePermissions(rawPermissions);
-  if (permissions.cashier) return "/cashier";
-  if (permissions.view_bookings) return "/dashboard/reservations";
-  if (permissions.view_facilities) return "/dashboard/facilities";
-  if (permissions.view_reports) return "/dashboard/reports";
-  if (permissions.manage_pricing) return "/dashboard/pricing";
-  if (permissions.manage_staff) return "/dashboard/staff";
-  return "/";
+  return "/dashboard";
 }
 
 export function getRequiredPermissionForPath(pathname: string): PermissionKey | null {
