@@ -68,7 +68,7 @@ export function Navbar() {
             <>
               {/* Show Dashboard for Admin and Staff */}
               {showStaffLinks && (
-                <Link href="/dashboard">
+                <Link href={"/dashboard" as any}>
                   <Button variant="outline" className="font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl">Dashboard</Button>
                 </Link>
               )}
@@ -145,7 +145,7 @@ export function Navbar() {
                 <>
                   {/* Show Dashboard for Admin and Staff */}
                   {showStaffLinks && (
-                    <Link href="/dashboard" onClick={() => setIsOpen(false)}>
+                    <Link href={"/dashboard" as any} onClick={() => setIsOpen(false)}>
                       <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-green text-tropical-green hover:bg-tropical-green hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
                         Dashboard
                       </Button>
