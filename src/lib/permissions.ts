@@ -2,9 +2,7 @@ import type { Role } from "@prisma/client";
 
 export const PERMISSION_KEYS = [
   "cashier",
-  "view_bookings",
   "manage_bookings",
-  "view_facilities",
   "manage_facilities",
   "view_reports",
   "manage_pricing",
@@ -16,9 +14,7 @@ export type PermissionMap = Record<PermissionKey, boolean>;
 
 export const EMPTY_PERMISSIONS: PermissionMap = {
   cashier: false,
-  view_bookings: false,
   manage_bookings: false,
-  view_facilities: false,
   manage_facilities: false,
   view_reports: false,
   manage_pricing: false,
@@ -82,8 +78,8 @@ export function getDefaultStaffLanding(rawPermissions: unknown): string {
 
 export function getRequiredPermissionForPath(pathname: string): PermissionKey | null {
   if (pathname.startsWith("/cashier")) return "cashier";
-  if (pathname.startsWith("/dashboard/reservations") || pathname.startsWith("/admin/reservations")) return "view_bookings";
-  if (pathname.startsWith("/dashboard/facilities") || pathname.startsWith("/admin/facilities")) return "view_facilities";
+  if (pathname.startsWith("/dashboard/reservations") || pathname.startsWith("/admin/reservations")) return "manage_bookings";
+  if (pathname.startsWith("/dashboard/facilities") || pathname.startsWith("/admin/facilities")) return "manage_facilities";
   if (pathname.startsWith("/dashboard/reports") || pathname.startsWith("/admin/reports")) return "view_reports";
   if (pathname.startsWith("/dashboard/analytics") || pathname.startsWith("/admin/analytics")) return "view_reports";
   if (pathname.startsWith("/dashboard/activity-logs") || pathname.startsWith("/admin/activity-logs")) return "view_reports";

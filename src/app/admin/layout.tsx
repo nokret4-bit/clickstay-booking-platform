@@ -55,9 +55,9 @@ export default function AdminLayout({
 
   const navItems = [
     { href: "/dashboard" as const, label: "Dashboard", icon: LayoutDashboard, adminOnly: false, badge: null, permission: null },
-    { href: "/dashboard/reservations" as const, label: "Reservations", icon: Calendar, adminOnly: false, badge: null, permission: "view_bookings" as const },
+    { href: "/dashboard/reservations" as const, label: "Reservations", icon: Calendar, adminOnly: false, badge: null, permission: "manage_bookings" as const },
     { href: "/cashier" as const, label: "Cashier", icon: Banknote, adminOnly: false, badge: null, permission: "cashier" as const },
-    { href: "/dashboard/facilities" as const, label: "Facilities", icon: Building2, adminOnly: false, badge: null, permission: "view_facilities" as const },
+    { href: "/dashboard/facilities" as const, label: "Facilities", icon: Building2, adminOnly: false, badge: null, permission: "manage_facilities" as const },
     { href: "/dashboard/pricing" as const, label: "Pricing", icon: BarChart3, adminOnly: false, badge: null, permission: "manage_pricing" as const },
     { href: "/dashboard/tickets" as const, label: "Tickets", icon: Ticket, adminOnly: true, badge: null, permission: null },
     { href: "/dashboard/reviews" as const, label: "Reviews", icon: Star, adminOnly: true, badge: null, permission: null },

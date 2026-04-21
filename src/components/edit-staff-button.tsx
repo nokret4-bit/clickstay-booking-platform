@@ -13,9 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const PERMISSIONS = [
   { key: "cashier", label: "Cashier" },
-  { key: "view_bookings", label: "View Bookings" },
   { key: "manage_bookings", label: "Manage Bookings" },
-  { key: "view_facilities", label: "View Facilities" },
   { key: "manage_facilities", label: "Manage Facilities" },
   { key: "view_reports", label: "View Reports" },
   { key: "manage_pricing", label: "Manage Pricing" },

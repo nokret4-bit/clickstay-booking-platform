@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (!hasPermission(session.user.role, session.user.permissions, "view_facilities")) {
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_facilities")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
