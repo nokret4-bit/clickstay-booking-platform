@@ -39,21 +39,24 @@ export function BookingsList({ bookings }: BookingsListProps) {
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     switch (filter) {
-      case "today":
+      case "today": {
         const endOfDay = new Date(startOfDay);
         endOfDay.setHours(23, 59, 59, 999);
         return { start: startOfDay, end: endOfDay };
-      case "week":
+      }
+      case "week": {
         const weekStart = new Date(startOfDay);
         weekStart.setDate(weekStart.getDate() - weekStart.getDay());
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 7);
         return { start: weekStart, end: weekEnd };
-      case "month":
+      }
+      case "month": {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         monthEnd.setHours(23, 59, 59, 999);
         return { start: monthStart, end: monthEnd };
+      }
       default:
         return { start: new Date(0), end: new Date() };
     }
@@ -61,7 +64,7 @@ export function BookingsList({ bookings }: BookingsListProps) {
 
   // Filter and search bookings
   const filteredAndSortedBookings = useMemo(() => {
-    let filtered = bookings.filter((booking) => {
+    const filtered = bookings.filter((booking) => {
       // Search filter
       const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
@@ -212,7 +215,6 @@ export function BookingsList({ bookings }: BookingsListProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value="ALL">All Statuses</option>
-                <option value="PENDING">Pending</option>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="CHECKED_IN">Checked In</option>
                 <option value="CHECKED_OUT">Checked Out</option>
