@@ -218,7 +218,6 @@ export function BookingsList({ bookings }: BookingsListProps) {
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="CHECKED_IN">Checked In</option>
                 <option value="CHECKED_OUT">Checked Out</option>
-                <option value="COMPLETED">Completed</option>
                 <option value="CANCELLED">Cancelled</option>
               </select>
             </div>
