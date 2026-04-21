@@ -80,13 +80,6 @@ export function Navbar() {
                 </Link>
               )}
               
-              {/* Show Management Portal only for Admin */}
-              {showAdminLinks && (
-                <Link href="/admin">
-                  <Button variant="outline" className="font-semibold border-2 border-tropical-red text-tropical-red hover:bg-tropical-red hover:text-white transition-all duration-300 hover:scale-105 hover:shadow-lg rounded-xl">Portal</Button>
-                </Link>
-              )}
-              
               <Link href="/api/auth/signout">
                 <Button variant="ghost" className="font-semibold text-tropical-black hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 transition-all duration-300 hover:scale-105 rounded-xl">
                   <User className="h-4 w-4 mr-2" />
@@ -157,15 +150,6 @@ export function Navbar() {
                     <Link href="/cashier" onClick={() => setIsOpen(false)}>
                       <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-yellow text-tropical-yellow hover:bg-tropical-yellow hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
                         Cashier
-                      </Button>
-                    </Link>
-                  )}
-                  
-                  {/* Show Management Portal only for Admin */}
-                  {showAdminLinks && (
-                    <Link href="/admin" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full justify-start font-semibold border-2 border-tropical-red text-tropical-red hover:bg-tropical-red hover:text-white transition-all duration-300 hover:translate-x-1 hover:shadow-lg rounded-xl">
-                        Portal
                       </Button>
                     </Link>
                   )}
