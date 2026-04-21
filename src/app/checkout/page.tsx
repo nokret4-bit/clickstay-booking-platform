@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowLeft, Calendar, Users, MapPin, Clock, Shield, CheckCircle, Plus, Minus, UserPlus } from "lucide-react";
+import { ArrowLeft, Calendar, Users, MapPin, Clock, Shield, CheckCircle, Plus, Minus, UserPlus, AlertCircle } from "lucide-react";
 import { DatePickerWithAvailability } from "@/components/date-picker-with-availability";
+import { ReservationCountdown } from "@/components/reservation-countdown";
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
@@ -47,6 +48,55 @@ function CheckoutContent() {
   const [datesAvailable, setDatesAvailable] = useState(true);
   const [facility, setFacility] = useState<any>(null);
   const [lockInfo, setLockInfo] = useState<any>(null);
+  const [isLockExpired, setIsLockExpired] = useState(false);
+
+  // Maximum additional guests for rooms
+  const MAX_ADDITIONAL_GUESTS_FOR_ROOM = 3;
+  const isRoom = facility?.kind === "ROOM";
+  const totalAdditionalGuests = extraAdults + extraChildren;
+  const exceedsMaxGuests = isRoom && totalAdditionalGuests > MAX_ADDITIONAL_GUESTS_FOR_ROOM;
+
+  const handleLockExpired = () => {
+    setIsLockExpired(true);
+    toast({
+      title: "⏰ Reservation Expired",
+      description: "Your facility reservation has expired. Returning to facility selection.",
+      variant: "destructive",
+    });
+    // Redirect to facility selection page with search parameters preserved after 3 seconds
+    setTimeout(() => {
+      router.push(`/unit/${unitId}?from=${startDate}&to=${endDate}`);
+    }, 3000);
+  };
+
+  const handleUnlockAndGoBack = async () => {
+    try {
+      // Remove the facility lock
+      if (lockInfo?.lockId) {
+        await fetch(`/api/bookings/lock?lockId=${lockInfo.lockId}`, {
+          method: "DELETE",
+        });
+        
+        toast({
+          title: "Lock Removed",
+          description: "The facility lock has been removed. You can select it again.",
+          variant: "default",
+        });
+      }
+      
+      // Go back to facility details page with search parameters preserved
+      router.push(`/unit/${unitId}?from=${startDate}&to=${endDate}`);
+    } catch (error) {
+      console.error("Error unlocking facility:", error);
+      toast({
+        title: "Note",
+        description: "Returning to facility selection.",
+        variant: "default",
+      });
+      // Still go back even if unlock fails
+      router.push(`/unit/${unitId}?from=${startDate}&to=${endDate}`);
+    }
+  };
 
   // Calculate deposit amount (50% of total)
   const depositAmount = quote ? quote.totalAmount * 0.5 : 0;
@@ -148,6 +198,28 @@ function CheckoutContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if lock has expired
+    if (isLocked && isLockExpired) {
+      toast({
+        title: "Reservation Expired",
+        description: "Your facility reservation has expired. Returning to facility selection.",
+        variant: "destructive",
+      });
+      router.push(`/unit/${unitId}`);
+      return;
+    }
+
+    // Check guest limit for rooms
+    if (isRoom && totalAdditionalGuests > MAX_ADDITIONAL_GUESTS_FOR_ROOM) {
+      toast({
+        title: "Too Many Guests",
+        description: `Rooms can only accommodate a maximum of ${MAX_ADDITIONAL_GUESTS_FOR_ROOM} additional guests.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!quote) {
       toast({
         title: "Get a quote first",
@@ -268,7 +340,7 @@ function CheckoutContent() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => router.back()}
+              onClick={handleUnlockAndGoBack}
               className="hover:scale-105 transition-all duration-200"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -282,6 +354,16 @@ function CheckoutContent() {
               </div>
             )}
           </div>
+
+          {/* Countdown Timer */}
+          {isLocked && lockInfo && (
+            <div className="mb-8">
+              <ReservationCountdown 
+                lockedUntil={lockInfo.lockedUntil} 
+                onExpired={handleLockExpired}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Booking Form */}
@@ -326,8 +408,11 @@ function CheckoutContent() {
                         id="customerPhone"
                         type="tel"
                         value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="+63 912 345 6789"
+                        onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                        inputMode="numeric"
+                        maxLength={11}
+                        pattern="\d{11}"
+                        placeholder="09123456789"
                       />
                     </div>
 
@@ -352,9 +437,24 @@ function CheckoutContent() {
                     </CardTitle>
                     <CardDescription>
                       Add extra guests beyond the base capacity{facility ? ` (${facility.capacity} included)` : ''}. Additional charges apply.
+                      {isRoom && <span className="block mt-2 font-medium text-amber-700"> Maximum 3 additional guests allowed for rooms.</span>}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* Guest Limit Warning */}
+                    {exceedsMaxGuests && (
+                      <div className="bg-red-50 border border-red-200 p-3 rounded-lg flex items-start gap-2">
+                        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-medium text-red-900">Exceeds Maximum</div>
+                          <p className="text-sm text-red-800">
+                            Rooms can only accommodate a maximum of 3 additional guests (you have {totalAdditionalGuests}). 
+                            Please reduce the number of guests.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Extra Adults */}
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
@@ -382,7 +482,19 @@ function CheckoutContent() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => setExtraAdults(extraAdults + 1)}
+                          onClick={() => {
+                            // Check room guest limit
+                            if (isRoom && totalAdditionalGuests >= MAX_ADDITIONAL_GUESTS_FOR_ROOM) {
+                              toast({
+                                title: "Maximum Reached",
+                                description: `Rooms can only accommodate a maximum of ${MAX_ADDITIONAL_GUESTS_FOR_ROOM} additional guests.`,
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            setExtraAdults(extraAdults + 1);
+                          }}
+                          disabled={isRoom && totalAdditionalGuests >= MAX_ADDITIONAL_GUESTS_FOR_ROOM}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -416,7 +528,19 @@ function CheckoutContent() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => setExtraChildren(extraChildren + 1)}
+                          onClick={() => {
+                            // Check room guest limit
+                            if (isRoom && totalAdditionalGuests >= MAX_ADDITIONAL_GUESTS_FOR_ROOM) {
+                              toast({
+                                title: "Maximum Reached",
+                                description: `Rooms can only accommodate a maximum of ${MAX_ADDITIONAL_GUESTS_FOR_ROOM} additional guests.`,
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            setExtraChildren(extraChildren + 1);
+                          }}
+                          disabled={isRoom && totalAdditionalGuests >= MAX_ADDITIONAL_GUESTS_FOR_ROOM}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -657,9 +781,22 @@ function CheckoutContent() {
                   form="checkout-form"
                   size="lg" 
                   className="w-full h-14 text-lg font-semibold" 
-                  disabled={loading || !quote || !customerName || !customerEmail}
+                  disabled={
+                    loading || 
+                    !quote || 
+                    !customerName || 
+                    !customerEmail ||
+                    isLockExpired ||
+                    exceedsMaxGuests
+                  }
                 >
-                  {loading ? "Processing..." : "Proceed to Payment"}
+                  {isLockExpired 
+                    ? "Reservation Expired" 
+                    : exceedsMaxGuests
+                    ? `Maximum ${MAX_ADDITIONAL_GUESTS_FOR_ROOM} Additional Guests Allowed`
+                    : loading 
+                    ? "Processing..." 
+                    : "Proceed to Payment"}
                 </Button>
               </div>
             </div>

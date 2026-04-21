@@ -83,7 +83,14 @@ export default function ContactPage() {
                     id="phone"
                     name="phone"
                     type="tel"
-                    placeholder="+63 912 345 6789"
+                    inputMode="numeric"
+                    maxLength={11}
+                    pattern="\d{11}"
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.value = target.value.replace(/\D/g, "").slice(0, 11);
+                    }}
+                    placeholder="09123456789"
                     className="h-12 border-2 border-tropical-tan/30 focus:border-tropical-red rounded-xl"
                   />
                 </div>

@@ -143,7 +143,11 @@ export function EditBookingButton({ booking }: EditBookingButtonProps) {
               <Input
                 id="customerPhone"
                 value={formData.customerPhone}
-                onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value.replace(/\D/g, "").slice(0, 11) })}
+                inputMode="numeric"
+                maxLength={11}
+                pattern="\d{11}"
+                placeholder="09123456789"
                 disabled={loading}
               />
             </div>

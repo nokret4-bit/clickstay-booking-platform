@@ -19,6 +19,7 @@ const PERMISSIONS = [
   { key: "manage_facilities", label: "Manage Facilities" },
   { key: "view_reports", label: "View Reports" },
   { key: "manage_pricing", label: "Manage Pricing" },
+  { key: "manage_staff", label: "Manage Staff" },
 ];
 
 export function CreateStaffButton() {

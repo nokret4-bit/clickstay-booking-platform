@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasPermission, normalizePermissions } from "@/lib/permissions";
 
 export async function PATCH(
   request: NextRequest,
@@ -13,9 +14,12 @@ export async function PATCH(
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_staff")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const body = await request.json();
-    const { name, isActive } = body;
+    const { name, isActive, permissions } = body;
 
     // Update user
     const user = await prisma.user.update({
@@ -23,18 +27,23 @@ export async function PATCH(
       data: {
         name,
         isActive,
+        ...(permissions !== undefined && { permissions: normalizePermissions(permissions) }),
       },
     });
 
     // Log audit
     if (session?.user?.id) {
+      const auditData: Record<string, unknown> = { name, isActive };
+      if (permissions !== undefined) {
+        auditData.permissions = normalizePermissions(permissions);
+      }
       await prisma.auditLog.create({
         data: {
           userId: session.user.id,
           action: "UPDATE_STAFF",
           entity: "User",
           entityId: user.id,
-          data: { name, isActive },
+          data: auditData,
         },
       });
     }
@@ -59,6 +68,9 @@ export async function DELETE(
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_staff")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Prevent deleting yourself

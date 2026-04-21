@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { hasPermission, normalizePermissions } from "@/lib/permissions";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,9 +12,12 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_staff")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const body = await request.json();
-    const { name, email, password, role = "STAFF" } = body;
+    const { name, email, password, role = "STAFF", permissions = {} } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -53,6 +57,7 @@ export async function POST(request: NextRequest) {
         email,
         passwordHash,
         role,
+        permissions: normalizePermissions(permissions),
         isActive: true,
         updatedAt: new Date(),
       },

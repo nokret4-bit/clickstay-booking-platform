@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
+
+function parseInactiveUntil(input: unknown): Date | null {
+  if (input === null || input === undefined || input === "") return null;
+  if (typeof input !== "string") return null;
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
 
 // GET - Fetch single facility
 export async function GET(
@@ -8,6 +17,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasPermission(session.user.role, session.user.permissions, "view_facilities")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { id } = await params;
     const facility = await prisma.facility.findUnique({
       where: { id },
@@ -38,8 +55,12 @@ export async function PUT(
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_facilities")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const body = await request.json();
+    const inactiveUntil = parseInactiveUntil(body.inactiveUntil);
 
     const facility = await prisma.facility.update({
       where: { id },
@@ -57,6 +78,7 @@ export async function PUT(
         extraAdultRate: body.extraAdultRate || null,
         extraChildRate: body.extraChildRate || null,
         isActive: body.isActive,
+        inactiveUntil: body.isActive ? null : inactiveUntil,
         updatedAt: new Date(),
       },
     });
@@ -85,6 +107,9 @@ export async function DELETE(
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_facilities")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // Soft delete - just set isActive to false
     const facility = await prisma.facility.update({
@@ -100,6 +125,56 @@ export async function DELETE(
     console.error("Admin facility DELETE error:", error);
     return NextResponse.json(
       { error: "Failed to delete facility" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Update only pricing fields
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const session = await getServerSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Staff with manage_pricing permission can update pricing
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_pricing")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { price, extraAdultRate, extraChildRate } = body;
+
+    // Validate price
+    if (price !== undefined && (price === null || price === "" || isNaN(parseFloat(price)) || parseFloat(price) <= 0)) {
+      return NextResponse.json(
+        { error: "Price must be a positive number" },
+        { status: 400 }
+      );
+    }
+
+    const facility = await prisma.facility.update({
+      where: { id },
+      data: {
+        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(extraAdultRate !== undefined && { extraAdultRate: extraAdultRate ? parseFloat(extraAdultRate) : null }),
+        ...(extraChildRate !== undefined && { extraChildRate: extraChildRate ? parseFloat(extraChildRate) : null }),
+        updatedAt: new Date(),
+      },
+    });
+
+    return NextResponse.json(facility);
+  } catch (error) {
+    console.error("Admin facility PATCH error:", error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return NextResponse.json(
+      { error: "Failed to update pricing" },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 
 export async function PATCH(
   request: NextRequest,
@@ -13,6 +14,9 @@ export async function PATCH(
     // Check authentication
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_bookings")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -28,13 +32,24 @@ export async function PATCH(
       isCustomPrice,
     } = body;
 
+    const normalizedPhone = typeof customerPhone === "string"
+      ? customerPhone.replace(/\D/g, "").slice(0, 11)
+      : "";
+
+    if (normalizedPhone && normalizedPhone.length !== 11) {
+      return NextResponse.json(
+        { error: "Customer phone must be exactly 11 digits" },
+        { status: 400 }
+      );
+    }
+
     // Update booking
     const booking = await prisma.booking.update({
       where: { id },
       data: {
         customerName,
         customerEmail,
-        customerPhone,
+        customerPhone: normalizedPhone || null,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         notes,
@@ -81,6 +96,9 @@ export async function DELETE(
     // Check authentication
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_bookings")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const booking = await prisma.booking.findUnique({

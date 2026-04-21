@@ -4,10 +4,37 @@ import { Calendar, Banknote, Users, Building2 } from "lucide-react";
 import { BookingStatus } from "@prisma/client";
 import { getServerSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import AdminProfileSection from "@/components/admin-profile-section";
+import { BookingsList } from "@/components/bookings-list";
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
+  // Verify user is logged in and is ADMIN or STAFF
+  const session = await getServerSession();
+  
+  if (!session) {
+    redirect("/login");
+  }
+
+  // Non-authenticated or guest users
+  if (session.user?.role !== "ADMIN" && session.user?.role !== "STAFF") {
+    redirect("/login");
+  }
+
+  // Get full user data including profile image
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  });
+
+  // Note: profileImage will be available after running: npx prisma migrate dev
+  const userWithProfile = user ? { ...user, profileImage: null as string | null } : null;
 
   // Clean up expired temporary locks to free database space
   await prisma.booking.deleteMany({
@@ -31,19 +58,23 @@ export default async function AdminDashboard() {
 
   // Fetch dashboard stats
   const [totalBookings, activeBookings, totalRevenue, totalFacilities] = await Promise.all([
-    prisma.booking.count(),
+    prisma.booking.count({
+      where: { customerName: { not: "Temporary Lock" } }
+    }),
     prisma.booking.count({
       where: {
         status: {
           in: [BookingStatus.CONFIRMED],
         },
+        customerName: { not: "Temporary Lock" }
       },
     }),
     prisma.booking.aggregate({
       where: {
         status: {
-          in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED],
+          in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.CHECKED_OUT],
         },
+        customerName: { not: "Temporary Lock" }
       },
       _sum: {
         totalAmount: true,
@@ -54,27 +85,39 @@ export default async function AdminDashboard() {
     }),
   ]);
 
-  const recentBookings = await prisma.booking.findMany({
-    take: 5,
+  // Fetch ALL bookings (not just recent ones)
+  const allBookings = await prisma.booking.findMany({
     orderBy: { createdAt: "desc" },
     where: {
       customerName: { not: "Temporary Lock" },
     },
     include: {
-      facility: true,
+      facility: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
   return (
     <div className="min-h-screen bg-white">
       <div className="p-8">
-        {/* Header */}
+        {/* Header with User Greeting */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Hello, {userWithProfile?.name || 'Admin'}, welcome to the portal
+          </h1>
           <p className="text-muted-foreground mt-1">
             Overview of your resort operations
           </p>
         </div>
+
+        {/* Profile Section */}
+        <div className="mb-8">
+          <AdminProfileSection user={userWithProfile} />
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="border-2 hover:shadow-lg transition-shadow">
@@ -133,37 +176,20 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Recent Bookings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Bookings</CardTitle>
-            <CardDescription>Latest reservations in the system</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentBookings.length === 0 ? (
-              <p className="text-muted-foreground">No bookings yet</p>
-            ) : (
-              <div className="space-y-4">
-                {recentBookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className="flex items-center justify-between border-b pb-4 last:border-0"
-                  >
-                    <div>
-                      <p className="font-semibold">{booking.code}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {booking.facility.name} - {booking.customerName}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">₱{Number(booking.totalAmount).toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">{booking.status}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <BookingsList bookings={allBookings.map(b => ({
+          ...b,
+          totalAmount: Number(b.totalAmount),
+          depositAmount: b.depositAmount ? Number(b.depositAmount) : null,
+          startDate: b.startDate.toISOString(),
+          endDate: b.endDate.toISOString(),
+          createdAt: b.createdAt.toISOString(),
+          updatedAt: b.updatedAt.toISOString(),
+          confirmedAt: b.confirmedAt?.toISOString() ?? null,
+          cancelledAt: b.cancelledAt?.toISOString() ?? null,
+          checkedInAt: b.checkedInAt?.toISOString() ?? null,
+          checkedOutAt: b.checkedOutAt?.toISOString() ?? null,
+          lockedUntil: b.lockedUntil?.toISOString() ?? null,
+        }))} />
       </div>
     </div>
   );

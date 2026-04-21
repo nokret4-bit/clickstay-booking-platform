@@ -12,6 +12,13 @@ import { useToast } from "@/components/ui/use-toast";
 
 type FacilityType = { id: string; name: string };
 
+const sanitizeDecimalInput = (value: string) => {
+  const cleaned = value.replace(/[^0-9.]/g, "");
+  const [whole, ...rest] = cleaned.split(".");
+  if (rest.length === 0) return whole;
+  return `${whole}.${rest.join("")}`;
+};
+
 export default function NewFacilityPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -21,14 +28,14 @@ export default function NewFacilityPage() {
     kind: "ROOM",
     description: "",
     capacity: 1,
-    price: 0,
+    price: "",
     pricingType: "PER_NIGHT" as "PER_NIGHT" | "PER_HEAD" | "PER_USE",
     photos: [] as string[],
     amenities: [] as string[],
     rules: [] as string[],
     freeAmenities: [] as string[],
-    extraAdultRate: 0,
-    extraChildRate: 0,
+    extraAdultRate: "",
+    extraChildRate: "",
     isActive: true,
   });
   const [uploading, setUploading] = useState(false);
@@ -54,10 +61,15 @@ export default function NewFacilityPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const numericPrice = Number(form.price);
+      if (!form.price || Number.isNaN(numericPrice) || numericPrice < 0) {
+        throw new Error("Please enter a valid decimal price.");
+      }
+
       const res = await fetch("/api/admin/facilities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, price: numericPrice }),
       });
 
       if (!res.ok) {
@@ -204,13 +216,13 @@ export default function NewFacilityPage() {
                 </Label>
                 <Input
                   id="price"
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="decimal"
                   value={form.price}
-                  onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
+                  onChange={(e) => setForm((f) => ({ ...f, price: sanitizeDecimalInput(e.target.value) }))}
                   required
                   className="h-11 text-base"
-                  placeholder="0.00"
+                  placeholder="e.g., 1500.50"
                 />
               </div>
 
@@ -220,11 +232,10 @@ export default function NewFacilityPage() {
                   <Label htmlFor="extraAdultRate" className="text-sm font-semibold">Extra Adult Rate (₱)</Label>
                   <Input
                     id="extraAdultRate"
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={form.extraAdultRate}
-                    onChange={(e) => setForm((f) => ({ ...f, extraAdultRate: Number(e.target.value) }))}
+                    onChange={(e) => setForm((f) => ({ ...f, extraAdultRate: sanitizeDecimalInput(e.target.value) }))}
                     className="h-11 text-base"
                     placeholder="0.00"
                   />
@@ -234,11 +245,10 @@ export default function NewFacilityPage() {
                   <Label htmlFor="extraChildRate" className="text-sm font-semibold">Extra Child Rate (₱)</Label>
                   <Input
                     id="extraChildRate"
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={form.extraChildRate}
-                    onChange={(e) => setForm((f) => ({ ...f, extraChildRate: Number(e.target.value) }))}
+                    onChange={(e) => setForm((f) => ({ ...f, extraChildRate: sanitizeDecimalInput(e.target.value) }))}
                     className="h-11 text-base"
                     placeholder="0.00"
                   />

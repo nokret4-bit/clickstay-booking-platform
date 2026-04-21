@@ -8,7 +8,7 @@ const LockRequestSchema = z.object({
   endDate: z.string(),
 });
 
-const LOCK_DURATION_MINUTES = 5; // 5 minutes lock - reduced to minimize database usage
+const LOCK_DURATION_MINUTES = 15; // 15 minutes lock for completing checkout
 
 export async function POST(request: NextRequest) {
   try {

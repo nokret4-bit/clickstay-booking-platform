@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { Building2, Eye, EyeOff } from "lucide-react";
+import { getDefaultStaffLanding } from "@/lib/permissions";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -35,9 +36,9 @@ export default function LoginPage() {
         
         // Redirect based on role
         if (session?.user?.role === "ADMIN") {
-          router.push("/admin");
+          router.push("/dashboard");
         } else if (session?.user?.role === "STAFF") {
-          router.push("/cashier");
+          router.push(getDefaultStaffLanding(session?.user?.permissions));
         } else {
           router.push("/");
         }

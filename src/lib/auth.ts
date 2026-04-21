@@ -5,18 +5,23 @@ import { getServerSession as getNextAuthServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { Role } from "@prisma/client";
+import { normalizePermissions } from "@/lib/permissions";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
       role: Role;
+      permissions: Record<string, boolean>;
+      isActive: boolean;
     } & DefaultSession["user"];
   }
 
   interface User {
     id: string;
     role: Role;
+    permissions?: Record<string, boolean>;
+    isActive?: boolean;
   }
 }
 
@@ -24,6 +29,9 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: Role;
+    permissions?: Record<string, boolean>;
+    isActive?: boolean;
+    iat?: number; // Token issued at timestamp
   }
 }
 
@@ -45,11 +53,16 @@ export const authOptions: NextAuthOptions = {
             email: true,
             name: true,
             role: true,
+            permissions: true,
+            isActive: true,
             passwordHash: true,
           }
         });
         
         if (!user || !user.passwordHash) {
+          return null;
+        }
+        if (!user.isActive) {
           return null;
         }
         
@@ -63,7 +76,9 @@ export const authOptions: NextAuthOptions = {
           id: user.id, 
           email: user.email, 
           name: user.name,
-          role: user.role
+          role: user.role,
+          permissions: normalizePermissions(user.permissions),
+          isActive: user.isActive,
         };
       },
     }),
@@ -71,15 +86,33 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user, token }) {
       if (session.user) {
-        session.user.id = user?.id ?? token.id;
-        session.user.role = user?.role ?? token.role;
+        // Use token values which are more reliable in JWT strategy
+        session.user.id = token.id as string;
+        session.user.role = token.role as Role;
+        session.user.permissions = (token.permissions as Record<string, boolean>) || {};
+        session.user.isActive = (token.isActive as boolean) ?? true;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        // Ensure permissions are properly stored
+        token.permissions = user.permissions ?? {};
+        token.isActive = user.isActive ?? true;
+        token.iat = Math.floor(Date.now() / 1000); // Track token issued time
+      }
+      // Check if token has been issued and is older than 8 hours
+      if (token.iat) {
+        const now = Math.floor(Date.now() / 1000);
+        const tokenAge = now - (token.iat as number);
+        const maxAge = 8 * 60 * 60; // 8 hours in seconds
+        
+        if (tokenAge > maxAge) {
+          // Token has expired, return null to invalidate
+          return null as any;
+        }
       }
       return token;
     },
@@ -92,6 +125,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 8 * 60 * 60, // 8 hours in seconds
   },
 };
 

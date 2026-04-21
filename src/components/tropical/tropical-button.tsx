@@ -8,7 +8,7 @@ interface TropicalButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const TropicalButton = forwardRef<HTMLButtonElement, TropicalButtonProps>(
   ({ className, variant = "primary", size = "md", children, ...props }, ref) => {
-    const baseStyles = "rounded-full font-semibold transition-all duration-300 shadow-md hover:shadow-xl active:scale-95";
+    const baseStyles = "inline-flex items-center justify-center rounded-full font-semibold transition-all duration-300 shadow-md hover:shadow-xl active:scale-95";
     
     const variants = {
       primary: "bg-gradient-tropical text-white hover:scale-105",

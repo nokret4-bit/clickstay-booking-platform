@@ -22,6 +22,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { hasPermission } from "@/lib/permissions";
 
 export default function AdminLayout({
   children,
@@ -30,36 +31,41 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch('/api/auth/session')
       .then(res => res.json())
       .then(session => {
         if (session?.user) {
+          setRole(session.user.role || null);
+          setPermissions(session.user.permissions || {});
           setIsAdmin(session.user.role === 'ADMIN');
         }
       });
   }, []);
 
   const isActive = (href: string) => {
-    if (href === '/admin') {
-      return pathname === '/admin';
+    if (href === '/dashboard') {
+      return pathname === '/dashboard';
     }
     return pathname?.startsWith(href);
   };
 
   const navItems = [
-    { href: "/admin" as const, label: "Dashboard", icon: LayoutDashboard, adminOnly: false, badge: null },
-    { href: "/admin/reservations" as const, label: "Reservations", icon: Calendar, adminOnly: false, badge: null },
-    { href: "/cashier" as const, label: "Cashier", icon: Banknote, adminOnly: false, badge: null },
-    { href: "/admin/facilities" as const, label: "Facilities", icon: Building2, adminOnly: true, badge: null },
-    { href: "/admin/tickets" as const, label: "Tickets", icon: Ticket, adminOnly: true, badge: null },
-    { href: "/admin/reviews" as const, label: "Reviews", icon: Star, adminOnly: true, badge: null },
-    { href: "/admin/reports" as const, label: "Reports", icon: BarChart3, adminOnly: true, badge: null },
-    { href: "/admin/promos" as const, label: "Promo Management", icon: Megaphone, adminOnly: true, badge: null },
-    { href: "/admin/gallery" as const, label: "Gallery", icon: Image, adminOnly: true, badge: null },
-    { href: "/admin/staff" as const, label: "Staff Management", icon: UserCog, adminOnly: true, badge: null },
-    { href: "/admin/activity-logs" as const, label: "Activity Logs", icon: Activity, adminOnly: true, badge: null },
+    { href: "/dashboard" as const, label: "Dashboard", icon: LayoutDashboard, adminOnly: false, badge: null, permission: null },
+    { href: "/dashboard/reservations" as const, label: "Reservations", icon: Calendar, adminOnly: false, badge: null, permission: "view_bookings" as const },
+    { href: "/cashier" as const, label: "Cashier", icon: Banknote, adminOnly: false, badge: null, permission: "cashier" as const },
+    { href: "/dashboard/facilities" as const, label: "Facilities", icon: Building2, adminOnly: false, badge: null, permission: "view_facilities" as const },
+    { href: "/dashboard/pricing" as const, label: "Pricing", icon: BarChart3, adminOnly: false, badge: null, permission: "manage_pricing" as const },
+    { href: "/dashboard/tickets" as const, label: "Tickets", icon: Ticket, adminOnly: true, badge: null, permission: null },
+    { href: "/dashboard/reviews" as const, label: "Reviews", icon: Star, adminOnly: true, badge: null, permission: null },
+    { href: "/dashboard/reports" as const, label: "Reports", icon: BarChart3, adminOnly: false, badge: null, permission: "view_reports" as const },
+    { href: "/dashboard/promos" as const, label: "Promo Management", icon: Megaphone, adminOnly: true, badge: null, permission: null },
+    { href: "/dashboard/gallery" as const, label: "Gallery", icon: Image, adminOnly: true, badge: null, permission: null },
+    { href: "/dashboard/staff" as const, label: "Staff Management", icon: UserCog, adminOnly: false, badge: null, permission: "manage_staff" as const },
+    { href: "/dashboard/activity-logs" as const, label: "Activity Logs", icon: Activity, adminOnly: false, badge: null, permission: "view_reports" as const },
   ];
 
   return (
@@ -85,6 +91,7 @@ export default function AdminLayout({
           <nav className="p-4 space-y-1.5">
             {navItems.map((item) => {
               if (item.adminOnly && !isAdmin) return null;
+              if (item.permission && role === "STAFF" && !hasPermission("STAFF", permissions, item.permission)) return null;
 
               const Icon = item.icon;
               const active = isActive(item.href);

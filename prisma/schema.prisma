@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  // directUrl = env("DIRECT_URL")  // Comment out for local development, uncomment for production (Neon)
 }
 
 model booking {
@@ -72,6 +72,7 @@ model facility {
   extraAdultRate  Decimal?   @db.Decimal(10, 2)  // Additional charge per extra adult
   extraChildRate  Decimal?   @db.Decimal(10, 2)  // Additional charge per extra child
   isActive      Boolean      @default(true)
+  inactiveUntil DateTime?                        // Automatically reactivate on this date
   createdAt     DateTime     @default(now())
   updatedAt     DateTime
   bookings      booking[]
@@ -82,6 +83,7 @@ model facility {
 
   @@index([isActive])
   @@index([kind])
+  @@index([inactiveUntil])
 }
 
 model payment {
@@ -107,7 +109,9 @@ model user {
   phone         String?
   passwordHash  String?
   role          Role            @default(GUEST)
+  permissions   Json?
   isActive      Boolean         @default(true)
+  profileImage  String?         // URL to profile image
   createdAt     DateTime        @default(now())
   updatedAt     DateTime
   verifiedBookings booking[]    @relation("VerifiedBy")

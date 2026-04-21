@@ -14,7 +14,11 @@ export const CreateBookingSchema = z.object({
   endDate: z.string().datetime("Invalid end date"),
   customerName: z.string().min(2, "Name must be at least 2 characters"),
   customerEmail: z.string().email("Invalid email address"),
-  customerPhone: z.string().optional(),
+  customerPhone: z
+    .string()
+    .regex(/^\d{11}$/, "Phone number must be exactly 11 digits")
+    .optional()
+    .or(z.literal("")),
   customerAddress1: z.string().max(100).optional(),
   customerAddress2: z.string().max(100).optional(),
   specialRequests: z.string().optional(),

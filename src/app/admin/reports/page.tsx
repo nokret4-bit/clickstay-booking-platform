@@ -22,6 +22,7 @@ import {
   Palmtree,
   Landmark,
   ArrowUpRight,
+  ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -107,11 +108,18 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ReportData | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [reportType, setReportType] = useState<'month' | 'year'>('month');
   const { toast } = useToast();
   const now = new Date();
 
   useEffect(() => {
     fetchReportData();
+    // Set default month to current month
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    setSelectedMonth(currentMonth);
+    setSelectedYear(now.getFullYear().toString());
   }, []);
 
   const fetchReportData = async () => {
@@ -136,11 +144,63 @@ export default function AdminReportsPage() {
     }
   };
 
-  const handleExport = async (type: 'bookings' | 'summary' = 'bookings', format: 'csv' | 'excel' = 'csv') => {
+  // Generate month options (last 12 months)
+  const generateMonthOptions = () => {
+    const options = [];
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const label = format(date, "MMMM yyyy");
+      options.push({ value, label });
+    }
+    return options;
+  };
+
+  // Generate year options (last 5 years)
+  const generateYearOptions = () => {
+    const options = [];
+    for (let i = 0; i < 5; i++) {
+      const year = now.getFullYear() - i;
+      options.push({ value: year.toString(), label: year.toString() });
+    }
+    return options;
+  };
+
+  const monthOptions = generateMonthOptions();
+  const yearOptions = generateYearOptions();
+
+  const handleExport = async (type: 'bookings' | 'summary' | 'report' = 'bookings') => {
+    if (type === 'report' && reportType === 'month' && !selectedMonth) {
+      toast({
+        title: "Error",
+        description: "Please select a month to export",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (type === 'report' && reportType === 'year' && !selectedYear) {
+      toast({
+        title: "Error",
+        description: "Please select a year to export",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setExporting(true);
     try {
-      const endpoint = format === 'excel' ? '/api/admin/export-excel' : '/api/admin/export';
-      const url = `${endpoint}${type === 'summary' ? '?type=summary' : ''}`;
+      let url = '/api/admin/export-excel';
+      
+      if (type === 'report') {
+        if (reportType === 'month') {
+          url = `/api/admin/reports/export?month=${selectedMonth}`;
+        } else {
+          url = `/api/admin/reports/export?year=${selectedYear}`;
+        }
+      } else {
+        url = `${url}${type === 'summary' ? '?type=summary' : ''}`;
+      }
       
       const response = await fetch(url, {
         method: 'GET',
@@ -156,10 +216,9 @@ export default function AdminReportsPage() {
       const blob = await response.blob();
       
       const contentDisposition = response.headers.get('Content-Disposition');
-      const defaultExt = format === 'excel' ? 'xlsx' : 'csv';
       const filename = contentDisposition
-        ? (contentDisposition.split('filename=')[1]?.replace(/"/g, '') || `${type}-export-${new Date().toISOString().split('T')[0]}.${defaultExt}`)
-        : `${type}-export-${new Date().toISOString().split('T')[0]}.${defaultExt}`;
+        ? (contentDisposition.split('filename=')[1]?.replace(/"/g, '') || `Manuel-Resort-Report-${new Date().toISOString().split('T')[0]}.xlsx`)
+        : `Manuel-Resort-Report-${new Date().toISOString().split('T')[0]}.xlsx`;
 
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -261,61 +320,119 @@ export default function AdminReportsPage() {
   };
 
   // Group facility stats by type for the detailed breakdown
-  const facilityStatsByType = (data.facilityStats || []).reduce((acc, stat) => {
+  const facilityStatsByType = (data?.facilityStats || []).reduce((acc, stat) => {
     if (!acc[stat.type]) {
       acc[stat.type] = [];
     }
-    acc[stat.type].push(stat);
+    (acc[stat.type] as FacilityStat[]).push(stat);
     return acc;
   }, {} as Record<string, FacilityStat[]>);
 
   // Calculate totals for facility stats
-  const totalFacilityRevenue = (data.facilityStats || []).reduce((sum, s) => sum + s.revenue, 0);
-  const totalFacilityBookings = (data.facilityStats || []).reduce((sum, s) => sum + s.count, 0);
+  const totalFacilityRevenue = (data?.facilityStats || []).reduce((sum, s) => sum + s.revenue, 0);
+  const totalFacilityBookings = (data?.facilityStats || []).reduce((sum, s) => sum + s.count, 0);
 
   // Determine revenue trend
-  const lastMonthRevenue = data.monthlyTrends.length >= 2 ? data.monthlyTrends[data.monthlyTrends.length - 2].revenue : 0;
-  const currentMonthRevenue = data.monthlyRevenue;
+  const monthlyTrends = data?.monthlyTrends || [];
+  const previousMonthData = monthlyTrends.length >= 2 ? monthlyTrends[monthlyTrends.length - 2] : null;
+  const lastMonthRevenue = previousMonthData?.revenue || 0;
+  const currentMonthRevenue = data?.monthlyRevenue || 0;
   const revenueTrend = lastMonthRevenue > 0 ? ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue * 100) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* Header */}
       <nav className="border-b bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900">Reports & Analytics</h1>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {format(now, "MMMM d, yyyy")} — Business Performance Overview
-              </p>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3 mb-1">
+              <Link href="/admin" className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                <ArrowLeft className="h-5 w-5 text-gray-700" />
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">Reports & Analytics</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Monthly and yearly business performance and detailed insights</p>
+              </div>
             </div>
+          </div>
+
+          {/* Report Type Selector and Period Selection */}
+          <div className="pt-4 border-t space-y-4">
+            {/* Toggle between Month and Year */}
             <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="font-medium"
-                asChild
+              <button
+                onClick={() => setReportType('month')}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition ${
+                  reportType === 'month'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                <Link href="/admin">Back to Dashboard</Link>
-              </Button>
-              <Button 
-                size="sm"
-                onClick={() => handleExport('bookings', 'excel')}
-                disabled={exporting}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                <Calendar className="h-4 w-4 inline mr-2" />
+                Monthly Report
+              </button>
+              <button
+                onClick={() => setReportType('year')}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition ${
+                  reportType === 'year'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
               >
-                <Download className="h-4 w-4 mr-1.5" />
-                {exporting ? 'Exporting...' : 'Export Excel'}
-              </Button>
-              <Button 
+                <FileSpreadsheet className="h-4 w-4 inline mr-2" />
+                Yearly Report
+              </button>
+            </div>
+
+            {/* Month/Year Selector and Export */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-1">
+                {reportType === 'month' ? (
+                  <>
+                    <label htmlFor="month-select" className="text-sm font-medium text-gray-700 self-center whitespace-nowrap">
+                      Select Month:
+                    </label>
+                    <select
+                      id="month-select"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="flex h-9 rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {monthOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    <label htmlFor="year-select" className="text-sm font-medium text-gray-700 self-center whitespace-nowrap">
+                      Select Year:
+                    </label>
+                    <select
+                      id="year-select"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                      className="flex h-9 rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {yearOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                )}
+              </div>
+              <Button
+                onClick={() => handleExport('report')}
+                disabled={exporting || (reportType === 'month' && !selectedMonth) || (reportType === 'year' && !selectedYear)}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium whitespace-nowrap"
                 size="sm"
-                onClick={() => handleExport('bookings', 'csv')}
-                disabled={exporting}
-                className="bg-green-600 hover:bg-green-700 text-white font-medium"
               >
-                <Download className="h-4 w-4 mr-1.5" />
-                {exporting ? 'Exporting...' : 'Export CSV'}
+                <Download className="h-4 w-4 mr-2" />
+                {exporting ? 'Exporting...' : `Export ${reportType === 'month' ? 'Report' : 'Annual Report'}`}
               </Button>
             </div>
           </div>
@@ -652,36 +769,62 @@ export default function AdminReportsPage() {
           <Card className="border shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold text-gray-900">Export Reports</CardTitle>
-              <CardDescription className="text-xs">Download reports for external use</CardDescription>
+              <CardDescription className="text-xs">Download comprehensive reports in Excel format</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button 
-                onClick={() => handleExport('bookings')}
-                disabled={exporting}
-                className="w-full justify-start"
-                size="lg"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                <div className="text-left">
-                  <p className="font-medium text-sm">{exporting ? 'Exporting...' : 'Detailed Report'}</p>
-                  <p className="text-xs opacity-80 font-normal">All bookings with 21 data fields</p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 ml-auto" />
-              </Button>
-              <Button 
-                onClick={() => handleExport('summary')}
-                disabled={exporting}
-                variant="outline"
-                className="w-full justify-start"
-                size="lg"
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                <div className="text-left">
-                  <p className="font-medium text-sm">Summary Report</p>
-                  <p className="text-xs opacity-60 font-normal">Aggregated overview data</p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 ml-auto" />
-              </Button>
+              {reportType === 'month' ? (
+                <Button 
+                  onClick={() => handleExport('report')}
+                  disabled={exporting || !selectedMonth}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white h-auto py-4"
+                >
+                  <Calendar className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <div className="text-left flex-1">
+                    <p className="font-semibold text-sm leading-tight">{exporting ? 'Exporting...' : `Export ${selectedMonth ? format(new Date(selectedMonth + '-01'), 'MMMM yyyy') : 'Current Month'}`}</p>
+                    <p className="text-xs opacity-90 font-normal leading-tight">Summary • Bookings • Facilities • Activity Logs</p>
+                  </div>
+                </Button>
+              ) : (
+                <Button 
+                  onClick={() => handleExport('report')}
+                  disabled={exporting || !selectedYear}
+                  className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white h-auto py-4"
+                >
+                  <FileSpreadsheet className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <div className="text-left flex-1">
+                    <p className="font-semibold text-sm leading-tight">{exporting ? 'Exporting...' : `Export ${selectedYear} Annual Report`}</p>
+                    <p className="text-xs opacity-90 font-normal leading-tight">12-Month Summary • Monthly Breakdown • Facilities • Trends</p>
+                  </div>
+                </Button>
+              )}
+              
+              <div className="border-t pt-3">
+                <p className="text-xs font-medium text-gray-600 mb-2">All-Time Reports</p>
+                <Button 
+                  onClick={() => handleExport('bookings')}
+                  disabled={exporting}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-auto py-3 mb-2"
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-3 flex-shrink-0" />
+                  <div className="text-left flex-1">
+                    <p className="font-semibold text-sm leading-tight">Detailed Booking Report</p>
+                    <p className="text-xs opacity-90 font-normal leading-tight">All bookings since inception</p>
+                  </div>
+                </Button>
+                
+                <Button 
+                  onClick={() => handleExport('summary')}
+                  disabled={exporting}
+                  variant="outline"
+                  className="w-full border-2 hover:bg-gray-50 h-auto py-3"
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-3 flex-shrink-0" />
+                  <div className="text-left flex-1">
+                    <p className="font-semibold text-sm leading-tight">Summary Report</p>
+                    <p className="text-xs opacity-70 font-normal leading-tight">All-time aggregated metrics</p>
+                  </div>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

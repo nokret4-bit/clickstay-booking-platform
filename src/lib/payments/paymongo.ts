@@ -31,17 +31,6 @@ interface PaymongoPaymentIntent {
     currency: string;
     status: string;
     client_key: string;
-    [key: string]: unknown;
-  };
-}
-
-interface PaymongoSource {
-  id: string;
-  type: string;
-  attributes: {
-    amount: number;
-    currency: string;
-    status: string;
     redirect: {
       checkout_url: string;
       success: string;
@@ -106,7 +95,7 @@ export async function createPaymentIntent(
     }
   }
 
-  const sourceData = (await sourceResponse.json()) as { data: PaymongoSource };
+  const sourceData = (await sourceResponse.json()) as { data: { attributes: { redirect: { checkout_url: string } } } };
   const source = sourceData.data;
 
   return {

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth";
+import { hasPermission } from "@/lib/permissions";
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_pricing")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Pricing feature is not implemented yet
@@ -24,6 +28,9 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasPermission(session.user.role, session.user.permissions, "manage_pricing")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // Return empty array for now

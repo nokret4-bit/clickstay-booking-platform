@@ -3,12 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
 import { BookingStatus } from "@prisma/client";
 import { startOfMonth, endOfMonth, eachDayOfInterval, subMonths, format } from "date-fns";
+import { hasPermission } from "@/lib/permissions";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasPermission(session.user.role, session.user.permissions, "view_reports")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -60,10 +64,11 @@ async function getDashboardData() {
       },
       _sum: { totalAmount: true },
     }),
+    // Monthly revenue: bookings checked out this month (actual revenue earned)
     prisma.booking.aggregate({
       where: {
-        status: { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.CHECKED_OUT] },
-        confirmedAt: { gte: monthStart, lte: monthEnd },
+        status: { in: [BookingStatus.COMPLETED, BookingStatus.CHECKED_OUT] },
+        checkedOutAt: { gte: monthStart, lte: monthEnd },
         customerName: { not: 'Temporary Lock' }
       },
       _sum: { totalAmount: true },
@@ -149,8 +154,8 @@ async function getDashboardData() {
       }),
       prisma.booking.aggregate({
         where: {
-          status: { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.CHECKED_OUT] },
-          confirmedAt: { gte: start, lte: end },
+          status: { in: [BookingStatus.COMPLETED, BookingStatus.CHECKED_OUT] },
+          checkedOutAt: { gte: start, lte: end },
           customerName: { not: 'Temporary Lock' }
         },
         _sum: { totalAmount: true },

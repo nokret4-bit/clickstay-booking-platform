@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         status: BookingStatus.PENDING,
         customerName: validated.customerName,
         customerEmail: validated.customerEmail,
-        customerPhone: validated.customerPhone,
+        customerPhone: validated.customerPhone || null,
         totalAmount: pricing.totalAmount,
         paymentType: validated.paymentType || "FULL",
         depositAmount: validated.depositAmount ? validated.depositAmount.toString() : null,

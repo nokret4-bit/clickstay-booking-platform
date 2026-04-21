@@ -12,6 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 
+const sanitizeDecimalInput = (value: string) => {
+  const cleaned = value.replace(/[^0-9.]/g, "");
+  const [whole, ...rest] = cleaned.split(".");
+  if (rest.length === 0) return whole;
+  return `${whole}.${rest.join("")}`;
+};
+
 interface EditFacilityPageProps {
   params: Promise<{
     id: string;
@@ -24,21 +31,25 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [inactiveMode, setInactiveMode] = useState<"until" | "duration">("until");
+  const [inactiveUntilLocal, setInactiveUntilLocal] = useState<string>("");
+  const [inactiveDurationDays, setInactiveDurationDays] = useState<number>(7);
   
   const [formData, setFormData] = useState({
     name: "",
     kind: "ROOM",
     description: "",
     capacity: 1,
-    price: 0,
+    price: "",
     pricingType: "PER_NIGHT" as "PER_NIGHT" | "PER_HEAD" | "PER_USE",
     photos: [] as string[],
     amenities: [] as string[],
     rules: [] as string[],
     freeAmenities: [] as string[],
-    extraAdultRate: 0,
-    extraChildRate: 0,
+    extraAdultRate: "",
+    extraChildRate: "",
     isActive: true,
+    inactiveUntil: null as string | null,
   });
 
   useEffect(() => {
@@ -50,21 +61,30 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
       const res = await fetch(`/api/admin/facilities/${id}`);
       if (res.ok) {
         const data = await res.json();
+        const inactiveUntilIso: string | null = data.inactiveUntil ? new Date(data.inactiveUntil).toISOString() : null;
+        const toDatetimeLocalValue = (iso: string | null) => {
+          if (!iso) return "";
+          const d = new Date(iso);
+          const pad = (n: number) => String(n).padStart(2, "0");
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        };
         setFormData({
           name: data.name || "",
           kind: data.kind || "ROOM",
           description: data.description || "",
           capacity: data.capacity || 1,
-          price: Number(data.price) || 0,
+          price: data.price ? String(Number(data.price)) : "",
           pricingType: data.pricingType || (data.kind === "HALL" ? "PER_HEAD" : "PER_NIGHT"),
           photos: data.photos || [],
           amenities: data.amenities || [],
           rules: data.rules || [],
           freeAmenities: data.freeAmenities || [],
-          extraAdultRate: Number(data.extraAdultRate) || 0,
-          extraChildRate: Number(data.extraChildRate) || 0,
+          extraAdultRate: data.extraAdultRate ? String(Number(data.extraAdultRate)) : "",
+          extraChildRate: data.extraChildRate ? String(Number(data.extraChildRate)) : "",
           isActive: data.isActive ?? true,
+          inactiveUntil: inactiveUntilIso,
         });
+        setInactiveUntilLocal(toDatetimeLocalValue(inactiveUntilIso));
       }
     } catch (error) {
       toast({
@@ -82,10 +102,29 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
     setSaving(true);
 
     try {
+      const numericPrice = Number(formData.price);
+      if (!formData.price || Number.isNaN(numericPrice) || numericPrice < 0) {
+        throw new Error("Please enter a valid decimal price.");
+      }
+
+      let inactiveUntilToSend: string | null = null;
+      if (!formData.isActive) {
+        if (inactiveMode === "until") {
+          inactiveUntilToSend = inactiveUntilLocal ? new Date(inactiveUntilLocal).toISOString() : null;
+        } else {
+          const days = Number(inactiveDurationDays);
+          if (Number.isFinite(days) && days > 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + Math.round(days));
+            inactiveUntilToSend = d.toISOString();
+          }
+        }
+      }
+
       const res = await fetch(`/api/admin/facilities/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, price: numericPrice, inactiveUntil: inactiveUntilToSend }),
       });
 
       if (res.ok) {
@@ -220,14 +259,13 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
                 </Label>
                 <Input
                   id="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, price: sanitizeDecimalInput(e.target.value) })}
                   required
                   className="h-11 text-base"
-                  placeholder="0.00"
+                  placeholder="e.g., 1500.50"
                 />
               </div>
 
@@ -237,11 +275,10 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
                   <Label htmlFor="extraAdultRate" className="text-sm font-semibold">Extra Adult Rate (₱)</Label>
                   <Input
                     id="extraAdultRate"
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={formData.extraAdultRate}
-                    onChange={(e) => setFormData({ ...formData, extraAdultRate: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, extraAdultRate: sanitizeDecimalInput(e.target.value) })}
                     className="h-11 text-base"
                     placeholder="0.00"
                   />
@@ -251,11 +288,10 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
                   <Label htmlFor="extraChildRate" className="text-sm font-semibold">Extra Child Rate (₱)</Label>
                   <Input
                     id="extraChildRate"
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={formData.extraChildRate}
-                    onChange={(e) => setFormData({ ...formData, extraChildRate: Number(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, extraChildRate: sanitizeDecimalInput(e.target.value) })}
                     className="h-11 text-base"
                     placeholder="0.00"
                   />
@@ -370,13 +406,91 @@ export default function EditFacilityPage({ params }: EditFacilityPageProps) {
                   type="checkbox"
                   id="isActive"
                   checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  onChange={(e) => {
+                    const nextActive = e.target.checked;
+                    setFormData((prev) => ({
+                      ...prev,
+                      isActive: nextActive,
+                      inactiveUntil: nextActive ? null : prev.inactiveUntil,
+                    }));
+                    if (nextActive) {
+                      setInactiveUntilLocal("");
+                    }
+                  }}
                   className="h-5 w-5 cursor-pointer"
                 />
                 <Label htmlFor="isActive" className="cursor-pointer font-medium text-base">
                   Active (visible to customers for booking)
                 </Label>
               </div>
+
+              {!formData.isActive && (
+                <div className="space-y-3 p-4 bg-muted/20 rounded-lg border-2">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Auto-reactivate</p>
+                    <p className="text-xs text-muted-foreground">
+                      Set when this facility should become active again.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="inactiveMode"
+                        checked={inactiveMode === "until"}
+                        onChange={() => setInactiveMode("until")}
+                      />
+                      <span className="text-sm font-medium">Until date/time</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="inactiveMode"
+                        checked={inactiveMode === "duration"}
+                        onChange={() => setInactiveMode("duration")}
+                      />
+                      <span className="text-sm font-medium">For duration</span>
+                    </label>
+                  </div>
+
+                  {inactiveMode === "until" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="inactiveUntil" className="text-sm font-semibold">
+                        Inactive until
+                      </Label>
+                      <Input
+                        id="inactiveUntil"
+                        type="datetime-local"
+                        value={inactiveUntilLocal}
+                        onChange={(e) => setInactiveUntilLocal(e.target.value)}
+                        className="h-11 text-base"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        The facility will be reactivated automatically once this date/time is reached.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="inactiveDurationDays" className="text-sm font-semibold">
+                        Inactive for (days)
+                      </Label>
+                      <Input
+                        id="inactiveDurationDays"
+                        type="number"
+                        min="1"
+                        value={inactiveDurationDays}
+                        onChange={(e) => setInactiveDurationDays(Number(e.target.value))}
+                        className="h-11 text-base"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        This will set an “inactive until” date based on today.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-4 pt-6 border-t">
                 <Button 
